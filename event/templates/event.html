@@ -1,0 +1,40 @@
+{% extends 'common.html' %}
+{% block header %}
+    <div class="container">
+        <h1>Raffle</h1>
+    </div>
+{% endblock %}
+
+{% block container %}
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
+            integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
+            crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx"
+            crossorigin="anonymous"></script>
+    <script language="JavaScript" type="text/javascript">
+        window.onload = function () {
+            $("[id^=image]").on("click", function () {
+                alert('Click on image');
+            });
+        }
+    </script>
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <h1>Event Stream</h1>
+            </div>
+            <div class="col-10">
+                {% for gift in object_list %}
+                    <tr>
+                        {% if gift.wrapped %}
+                            <td><img id="image-{{ gift.id }}" src="{{ gift.pixelated_image.url }}" class="img-fluid">
+                            </td>
+                        {% else %}
+                            <td><img src="{{ gift.image.url }}" class="img-fluid"></td>
+                        {% endif %}
+                    </tr>
+                {% endfor %}
+            </div>
+        </div>
+{% endblock %}
