@@ -21,8 +21,8 @@ from django.urls import path, include
 
 import gifts
 
-
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('gifts/', include('gifts.urls')),
-    ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+                  path('admin/', admin.site.urls),
+                  path('gifts/', include('gifts.urls')),
+                  path('accounts/', include('django.contrib.auth.urls')),
+              ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

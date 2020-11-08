@@ -129,3 +129,5 @@ STATIC_URL = '/static/'
 
 MEDIA_ROOT = '/var/www/raffle/media/'
 MEDIA_URL = '/media/'
+
+LOGIN_REDIRECT_URL = '/'
