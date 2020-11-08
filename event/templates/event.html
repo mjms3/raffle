@@ -1,4 +1,15 @@
 {% extends 'common.html' %}
+{% block pagecss %}
+    <style>
+        .list-group {
+            max-height: 900px;
+            margin-bottom: 10px;
+            overflow: scroll;
+            -webkit-overflow-scrolling: touch;
+        }
+    </style>
+{% endblock %}
+
 {% block header %}
     <div class="container">
         <h1>Raffle</h1>
@@ -6,12 +17,13 @@
 {% endblock %}
 
 {% block container %}
-    <div class="container">
+    <div class="container-fluid">
         <div class="row">
             <div class="col">
                 <h1>Event Stream</h1>
+                <ul class="list-group" id="event-stream"></ul>
             </div>
-            <div class="col-10">
+            <div class="col-9">
                 {% for gift in object_list %}
                     <tr>
                         {% if gift.wrapped %}
@@ -44,19 +56,30 @@
                 });
             }
             $(document).ready(function () {
+                $('#event-stream').data("last_processed_event", 0);
                 function poll() {
-                    $.get({
+                    $.post({
                         url: '/event/api/stream/',
+                        data: {
+                            'last_processed_event': $('#event-stream').data("last_processed_event"),
+                            'csrfmiddlewaretoken': '{{ csrf_token }}'
+                        },
                         success: function (data) {
-                            console.log(data)
+                            var list = document.getElementById('event-stream');
+                            for (activity of data['activity']) {
+                                var entry = document.createElement('li');
+                                entry.appendChild(document.createTextNode(activity));
+                                list.appendChild(entry);
+                            }
+                            $('#event-stream').data("last_processed_event", data["last_event"]);
                         },
                         timeout: 5000
                     }).always(function () {
                         setTimeout(poll, 5000)
                     })
                 }
-
-               setTimeout(poll, 5000);
+                setTimeout(poll, 5000);
             })
         </script>
+    </div>
 {% endblock %}

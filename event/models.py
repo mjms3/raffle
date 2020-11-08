@@ -17,3 +17,20 @@ class Action(models.Model):
 
     action_type = models.CharField(max_length=1, choices=ActionType.choices)
     timestamp_ts = models.DateTimeField(auto_now_add=True, blank=True)
+
+    @property
+    def message(self):
+        if self.action_type == self.ActionType.CHOOSE_GIFT:
+            return '{:%H:%M:%S}: {} unwrapped a {}'.format(
+                self.timestamp_ts,
+                self.by_user_id,
+                self.gift_id.description,
+            )
+        elif self.action_type == self.ActionType.TRANSFERRED:
+            return '{:%H:%m:%s}: {} transferred {} from {} to {}'.format(
+                self.timestamp_ts,
+                self.by_user_id,
+                self.gift_id.description,
+                self.from_user_id,
+                self.to_user_id
+            )
