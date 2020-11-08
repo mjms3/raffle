@@ -31,7 +31,7 @@
                     var image_id = this.id;
                     $.ajax({
                         type: 'POST',
-                        url: '/event/ajax/unwrap_image/',
+                        url: '/event/api/unwrap_image/',
                         data: {
                             'image_id': image_id,
                             'csrfmiddlewaretoken': '{{ csrf_token }}'
@@ -43,5 +43,20 @@
                     });
                 });
             }
+            $(document).ready(function () {
+                function poll() {
+                    $.get({
+                        url: '/event/api/stream/',
+                        success: function (data) {
+                            console.log(data)
+                        },
+                        timeout: 5000
+                    }).always(function () {
+                        setTimeout(poll, 5000)
+                    })
+                }
+
+               setTimeout(poll, 5000);
+            })
         </script>
 {% endblock %}
