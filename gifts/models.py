@@ -24,8 +24,7 @@ class Gift(models.Model):
         _, ext = splitext(image_path)
         in_memory_file = BytesIO()
         result.save(in_memory_file, format=ext.lstrip('.'))
-        new_path = join(dirname(image_path), 'pixelated-{}'.format(basename(image_path)))
-        self.pixelated_image = ContentFile(in_memory_file.getvalue(), new_path)
+        self.pixelated_image = ContentFile(in_memory_file.getvalue(), 'pixelated-{}'.format(basename(image_path)))
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         self._get_pixelated_image()
