@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block header %}
+    <div class="container">
+        <h1>Create User</h1>
+    </div>
+{% endblock %}
+
+
+{% block content %}
+    <form action='/account/signup/' method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <input type="submit" value="Create">
+    </form>
+{% endblock %}

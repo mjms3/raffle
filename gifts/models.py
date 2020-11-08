@@ -7,12 +7,14 @@ from django.contrib.auth.models import User
 from django.core.files.base import ContentFile
 from django.db import models
 
+from raffle import settings
+
 
 class Gift(models.Model):
     add_ts = models.DateTimeField(default=datetime.now, blank=True)
     description = models.TextField()
     wrapped = models.BooleanField(default=True)
-    added_by = models.ForeignKey(User, on_delete=models.RESTRICT)
+    added_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.RESTRICT)
     image = models.ImageField()
     pixelated_image = models.ImageField(editable=False)
 
