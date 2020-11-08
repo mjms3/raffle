@@ -1,15 +1,14 @@
 from django.contrib.auth import authenticate, login
 from django.http import HttpResponseRedirect
-from django.views.generic import TemplateView, FormView, CreateView
+from django.views.generic import FormView
 
 from account.forms import CustomUserCreationForm
-from account.models import CustomUser
 
 
 class NewUserView(FormView):
     form_class = CustomUserCreationForm
     template_name = 'user_form.html'
-    success_url = '/gifts'
+    success_url = '/gifts/donate'
 
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
