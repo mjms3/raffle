@@ -12,9 +12,10 @@ from raffle import settings
 
 class Gift(models.Model):
     add_ts = models.DateTimeField(default=datetime.now, blank=True)
-    description = models.TextField()
+    description = models.CharField(max_length=120)
     wrapped = models.BooleanField(default=True)
-    added_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.RESTRICT)
+    added_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.RESTRICT, editable=False, related_name='donations')
+    given_to = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.RESTRICT, blank=True, null=True, related_name='prizes')
     image = models.ImageField()
     pixelated_image = models.ImageField(editable=False)
 
