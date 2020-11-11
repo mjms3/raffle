@@ -1,6 +1,7 @@
 from django.contrib.auth import authenticate, login
 from django.http import HttpResponseRedirect
-from django.views.generic import FormView
+from django.urls import reverse_lazy
+from django.views.generic import FormView, TemplateView
 
 from account.forms import CustomUserCreationForm
 
@@ -8,7 +9,7 @@ from account.forms import CustomUserCreationForm
 class NewUserView(FormView):
     form_class = CustomUserCreationForm
     template_name = 'user_form.html'
-    success_url = '/gifts/donate'
+    success_url = reverse_lazy('user_profile')
 
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
@@ -24,3 +25,6 @@ class NewUserView(FormView):
         user = authenticate(username=username, password=raw_password)
         login(self.request, user)
         return super(NewUserView, self).form_valid(form)
+
+class UserProfileView(TemplateView):
+    template_name = 'profile.html'
