@@ -2,14 +2,19 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import PermissionRequiredMixin, LoginRequiredMixin
 from django.http import JsonResponse, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
+from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView
 
-from event.models import Action, Gift
+from event.models import Action, Gift, RaffleEvent
 
 
 class EventView(LoginRequiredMixin, ListView):
     template_name = 'event.html'
     model = Gift
+
+    def get_queryset(self):
+        event = get_object_or_404(RaffleEvent, id=self.kwargs['event_id'])
+        return Gift.objects.filter(event=event)
 
 class GiftIndexView(PermissionRequiredMixin, ListView):
     permission_required = 'gifts.view_gift'
@@ -26,9 +31,9 @@ class MyGiftsView(LoginRequiredMixin, ListView):
 
 class GiftCreateView(LoginRequiredMixin, CreateView):
     model = Gift
-    fields = ['description', 'image']
+    fields = ['description', 'image', 'event']
     template_name = 'gift_form.html'
-    success_url = '/gifts/donations'
+    success_url = reverse_lazy('my_donations')
 
     def form_valid(self, form):
         gift = form.save(commit=False)

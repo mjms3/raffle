@@ -3,7 +3,7 @@ from django.urls import path
 from event import views
 
 urlpatterns = [
-    path('',  views.EventView.as_view(), name='index'),
+    path('<int:event_id>/',  views.EventView.as_view(), name='index'),
     path('gifts/', views.GiftIndexView.as_view(), name='index'),
     path('gifts/donate', views.GiftCreateView.as_view(), name='gift_create'),
     path('gifts/donations', views.MyGiftsView.as_view(), name='my_donations'),

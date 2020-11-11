@@ -14,7 +14,7 @@ from raffle import settings
 
 
 class RaffleEvent(models.Model):
-    name = models.CharField(max_length=250)
+    name = models.CharField(max_length=250, unique=True)
 
     class Phase(models.TextChoices):
         PRE_START = 'P', _('Pre Start')
@@ -23,6 +23,9 @@ class RaffleEvent(models.Model):
         FINISHED = 'F', _('Finished')
 
     phase = models.CharField(max_length=1,choices=Phase.choices)
+
+    def __str__(self):
+        return self.name
 
 
 
