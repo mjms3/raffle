@@ -51,7 +51,7 @@ def process_image_click(request):
     gift_id = int(request.POST['image_id'].replace('image-', ''))
     gift = get_object_or_404(Gift, id=gift_id)
 
-    assert gift.event is event, 'Gift: %s and event: %s are inconsistent' %(gift, event)
+    assert gift.event == event, 'Gift: %s and event: %s are inconsistent' %(gift, event)
 
     data = {
         'image': gift.image.url,
@@ -64,6 +64,7 @@ def process_image_click(request):
                    to_user=request.user,
                    by_user=request.user,
                    action_type=Action.ActionType.CHOOSE_GIFT,
+                   event=event,
                    )
     gift.save()
     event.save()
@@ -72,9 +73,13 @@ def process_image_click(request):
 
 @login_required
 def stream(request):
-    last_processed_event= request.POST.get('last_processed_event',0)
-    activity = Action.objects.filter(id__gt=last_processed_event)
+    event = get_object_or_404(RaffleEvent, id = request.POST['event_id'] )
+
+    last_processed_action= request.POST.get('last_processed_action',0)
+    activity = Action.objects.filter(id__gt=last_processed_action,
+                                     event=event,
+                                     )
     return JsonResponse({
         'activity': [a.message for a in activity],
-        'last_event': max(a.id for a in activity) if len(activity)>0 else last_processed_event,
+        'last_event': max(a.id for a in activity) if len(activity)>0 else last_processed_action,
     })

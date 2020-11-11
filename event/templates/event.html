@@ -21,7 +21,7 @@
         <div class="row">
             <div class="col">
                 <h1>Event Stream</h1>
-                <ul class="list-group" id="event-stream"></ul>
+                <ul class="list-group" id="action-stream"></ul>
             </div>
             <div class="col-9">
                 {% for gift in object_list %}
@@ -57,22 +57,23 @@
                 });
             }
             $(document).ready(function () {
-                $('#event-stream').data("last_processed_event", 0);
+                $('#action-stream').data("last_processed_action", 0);
                 function poll() {
                     $.post({
                         url: '{% url 'event_stream' %}',
                         data: {
-                            'last_processed_event': $('#event-stream').data("last_processed_event"),
+                            'last_processed_action': $('#action-stream').data("last_processed_action"),
+                                                        'event_id': {{ view.kwargs.event_id }},
                             'csrfmiddlewaretoken': '{{ csrf_token }}'
                         },
                         success: function (data) {
-                            var list = document.getElementById('event-stream');
+                            var list = document.getElementById('action-stream');
                             for (activity of data['activity']) {
                                 var entry = document.createElement('li');
                                 entry.appendChild(document.createTextNode(activity));
                                 list.appendChild(entry);
                             }
-                            $('#event-stream').data("last_processed_event", data["last_event"]);
+                            $('#action-stream').data("last_processed_action", data["last_event"]);
                         },
                         timeout: 5000
                     }).always(function () {
