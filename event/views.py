@@ -6,8 +6,7 @@ from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView
 
-from event.functions import _pick_next_person
-from event.models import Action, Gift, RaffleEvent
+from event.models import Action, Gift, RaffleEvent, _pick_next_person
 
 
 class EventView(LoginRequiredMixin, ListView):
@@ -84,10 +83,7 @@ def process_image_click(request):
         gift.save()
         action.save()
         _pick_next_person(current_user=request.user, raffle_event=raffle_event)
-    return JsonResponse({
-        'image': gift.image.url,
-        'element': '#{}'.format(request.POST['image_id'])
-    })
+    return JsonResponse({'error':None})
 
 
 @login_required
@@ -98,7 +94,9 @@ def stream(request):
     activity = Action.objects.filter(id__gt=last_processed_action,
                                      event=event,
                                      )
+    image_urls = {r.image_id:r.image_url for r in Gift.objects.filter(event_id=event.id)}
     return JsonResponse({
         'activity': [a.message for a in activity],
         'last_event': max(a.id for a in activity) if len(activity) > 0 else last_processed_action,
+        'image_urls': image_urls,
     })

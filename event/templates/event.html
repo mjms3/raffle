@@ -26,12 +26,9 @@
             <div class="col-9">
                 {% for gift in object_list %}
                     <tr>
-                        {% if gift.wrapped %}
-                            <td><img id="image-{{ gift.id }}" src="{{ gift.pixelated_image.url }}" class="img-fluid">
-                            </td>
-                        {% else %}
-                            <td><img src="{{ gift.image.url }}" class="img-fluid"></td>
-                        {% endif %}
+                        <td>
+                            <img id="{{ gift.image_id }}" src="{{ gift.image_url }}" class="img-fluid">
+                        </td>
                     </tr>
                 {% endfor %}
             </div>
@@ -51,19 +48,22 @@
                         },
                         dataType: 'json',
                         success: function (data) {
-                            $(data['element']).attr('src', data['image'])
+                            if (data['error']!==null){
+                                alert(data['error'])
+                            }
                         }
                     });
                 });
             }
             $(document).ready(function () {
                 $('#action-stream').data("last_processed_action", 0);
+
                 function poll() {
                     $.post({
                         url: '{% url 'event_stream' %}',
                         data: {
                             'last_processed_action': $('#action-stream').data("last_processed_action"),
-                                                        'event_id': {{ view.kwargs.event_id }},
+                            'event_id': {{ view.kwargs.event_id }},
                             'csrfmiddlewaretoken': '{{ csrf_token }}'
                         },
                         success: function (data) {
@@ -74,12 +74,16 @@
                                 list.appendChild(entry);
                             }
                             $('#action-stream').data("last_processed_action", data["last_event"]);
+                            for (image_id of Object.keys(data['image_urls'])){
+                                $('#'+image_id).attr('src', data['image_urls'][image_id]);
+                            }
                         },
                         timeout: 5000
                     }).always(function () {
                         setTimeout(poll, 5000)
                     })
                 }
+
                 setTimeout(poll, 5000);
             })
         </script>

@@ -1,15 +1,21 @@
+import random
 from datetime import datetime
+from io import BytesIO
+from os.path import splitext, basename
 
+from PIL import Image
 from django.contrib.auth.models import User
+from django.core.files.base import ContentFile
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import CASCADE
+from django.db.models import F
 from django.utils.translation import gettext_lazy as _
 from model_utils import FieldTracker
 from private_files import PrivateFileField
 
-from event.functions import file_visible_condition, _get_pixelated_image
 from raffle import settings
+
 
 
 class RaffleEvent(models.Model):
@@ -59,6 +65,46 @@ class RaffleParticipation(models.Model):
     def __str__(self):
         return 'Participation of %s in %s' %(self.user, self.event)
 
+def file_visible_condition(request, instance):
+    user_logged_in = (not request.user.is_anonymous) and request.user.is_authenticated
+    owned_by_this_user = instance.added_by.pk == request.user.pk
+    user_is_admin = request.user.is_superuser
+    gift_is_unwrapped = not instance.wrapped
+    return user_logged_in and (owned_by_this_user or user_is_admin or gift_is_unwrapped)
+
+
+def _get_pixelated_image(image_obj):
+    image_path = image_obj.path
+    img = Image.open(BytesIO(image_obj.file.read()))
+    img_small = img.resize((16, 16), resample=Image.BILINEAR)
+    result = img_small.resize(img.size, Image.NEAREST)
+    _, ext = splitext(image_path)
+    in_memory_file = BytesIO()
+    result.save(in_memory_file, format=ext.lstrip('.'))
+    return ContentFile(in_memory_file.getvalue(), 'pixelated-{}'.format(basename(image_path)))
+
+
+def _pick_next_person(current_user, raffle_event):
+    assert raffle_event.phase == RaffleEvent.Phase.NORMAL_RAFFLE
+    raffle_participants = RaffleParticipation.objects.filter(event_id=raffle_event.id).filter(
+        number_of_tickets__gt=F('number_of_times_drawn'))
+    weights = [r.number_of_tickets - r.number_of_times_drawn for r in raffle_participants]
+    next_person = random.choices(raffle_participants, weights)
+    assert len(next_person) == 1, next_person
+    next_person = next_person[0]
+    action = Action(
+        event=raffle_event,
+        gift=None,
+        from_user=None,
+        to_user=next_person.user,
+        by_user=current_user,
+        action_type=Action.ActionType.CHANGED_USER
+    )
+    next_person.number_of_times_drawn += 1
+    raffle_event.current_user = next_person.user
+    raffle_event.save()
+    action.save()
+    next_person.save()
 
 class Gift(models.Model):
     add_ts = models.DateTimeField(default=datetime.now, blank=True)
@@ -70,12 +116,24 @@ class Gift(models.Model):
     pixelated_image = models.ImageField(editable=False)
     event = models.ForeignKey(RaffleEvent, on_delete=CASCADE)
 
+    tracker = FieldTracker(fields=('description',))
+
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        if self.event.phase != RaffleEvent.Phase.PRE_START and self.tracker.previous('description') is None:
+            raise Exception("Can't add an item to the raffle after it has started")
         self.pixelated_image = _get_pixelated_image(self.image)
         super().save(force_insert, force_update, using, update_fields)
 
     def __str__(self):
         return self.description
+
+    @property
+    def image_url(self):
+        return self.pixelated_image.url if self.wrapped else self.image.url
+
+    @property
+    def image_id(self):
+        return 'image-{}'.format(self.id)
 
 class Action(models.Model):
     event = models.ForeignKey(RaffleEvent, on_delete=CASCADE)
