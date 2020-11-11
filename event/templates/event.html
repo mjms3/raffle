@@ -43,7 +43,7 @@
                     var image_id = this.id;
                     $.ajax({
                         type: 'POST',
-                        url: '/event/api/unwrap_image/',
+                        url: '{% url 'process_image_click' %}',
                         data: {
                             'image_id': image_id,
                             'csrfmiddlewaretoken': '{{ csrf_token }}'
@@ -59,7 +59,7 @@
                 $('#event-stream').data("last_processed_event", 0);
                 function poll() {
                     $.post({
-                        url: '/event/api/stream/',
+                        url: '{% url 'event_stream' %}',
                         data: {
                             'last_processed_event': $('#event-stream').data("last_processed_event"),
                             'csrfmiddlewaretoken': '{{ csrf_token }}'

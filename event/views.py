@@ -13,7 +13,7 @@ class EventView(ListView):
 
 
 @login_required
-def unwrap_image(request):
+def process_image_click(request):
     gift_id = int(request.POST['image_id'].replace('image-', ''))
     gift = get_object_or_404(Gift, id=gift_id)
     data = {
