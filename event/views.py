@@ -1,13 +1,13 @@
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import PermissionRequiredMixin, LoginRequiredMixin
-from django.db.models import F
+from django.db import transaction
 from django.http import JsonResponse, HttpResponseRedirect
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView
 
-from event.models import Action, Gift, RaffleEvent, RaffleParticipation
-import random
+from event.functions import _pick_next_person
+from event.models import Action, Gift, RaffleEvent
 
 
 class EventView(LoginRequiredMixin, ListView):
@@ -50,44 +50,27 @@ class GiftCreateView(LoginRequiredMixin, CreateView):
 @permission_required('change_raffleevent')
 def change_current_gift_picker(request, event_id):
     raffle_event = get_object_or_404(RaffleEvent, id=event_id)
-    assert raffle_event.phase == RaffleEvent.Phase.NORMAL_RAFFLE
-    raffle_participants = RaffleParticipation.objects.filter(event_id=raffle_event.id).filter(
-        number_of_tickets__gt=F('number_of_times_drawn'))
-    weights = [r.number_of_tickets - r.number_of_times_drawn for r in raffle_participants]
-    next_person = random.choices(raffle_participants, weights)
-    assert len(next_person)==1, next_person
-    next_person = next_person[0]
-    action = Action(
-        event=raffle_event,
-        gift=None,
-        from_user=None,
-        to_user=next_person.user,
-        by_user=request.user,
-        action_type=Action.ActionType.CHANGED_USER
-    )
-    next_person.number_of_times_drawn += 1
-    raffle_event.current_user = next_person.user
-    raffle_event.save()
-    action.save()
-    next_person.save()
+    current_user = request.user
+    with transaction.atomic():
+        _pick_next_person(current_user, raffle_event)
     return JsonResponse({'success':True})
-    
+
 
 @login_required
 def process_image_click(request):
     raffle_event = get_object_or_404(RaffleEvent, id=request.POST['event_id'])
     if raffle_event.phase in (raffle_event.Phase.PRE_START, raffle_event.Phase.FINISHED):
         return JsonResponse({'error': 'Raffle not in progress'})
+    if raffle_event.current_user != request.user:
+        return JsonResponse({'error': "It's not your turn to pick a gift!"})
+
     gift_id = int(request.POST['image_id'].replace('image-', ''))
     gift = get_object_or_404(Gift, id=gift_id)
-
-    assert gift.event == raffle_event, 'Gift: %s and RaffleEvent: %s are inconsistent' % (gift, raffle_event)
+    if gift.event != raffle_event:
+        return JsonResponse({'error':'Gift: %s and RaffleEvent: %s are inconsistent' % (gift, raffle_event)})
     if not gift.wrapped:
         return JsonResponse({'error':'Gift already unwrapped'})
-    data = {
-        'image': gift.image.url,
-        'element': '#{}'.format(request.POST['image_id'])
-    }
+
     gift.given_to = request.user
     gift.wrapped = False
     action = Action(gift=gift,
@@ -97,9 +80,14 @@ def process_image_click(request):
                     action_type=Action.ActionType.CHOOSE_GIFT,
                     event=raffle_event,
                     )
-    gift.save()
-    action.save()
-    return JsonResponse(data)
+    with transaction.atomic():
+        gift.save()
+        action.save()
+        _pick_next_person(current_user=request.user, raffle_event=raffle_event)
+    return JsonResponse({
+        'image': gift.image.url,
+        'element': '#{}'.format(request.POST['image_id'])
+    })
 
 
 @login_required
