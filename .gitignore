@@ -1,2 +1,4 @@
 venv
 .idea
+raffle/connection_details.py
+**/__pycache__
