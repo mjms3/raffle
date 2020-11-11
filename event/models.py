@@ -1,16 +1,13 @@
 from datetime import datetime
-from io import BytesIO
-from os.path import basename, splitext
 
-from PIL import Image
 from django.contrib.auth.models import User
-from django.core.files.base import ContentFile
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import CASCADE
 from django.utils.translation import gettext_lazy as _
 from private_files import PrivateFileField
 
+from event.functions import file_visible_condition, _get_pixelated_image
 from raffle import settings
 
 
@@ -27,6 +24,7 @@ class RaffleEvent(models.Model):
 
     def __str__(self):
         return self.name
+
 
 class RaffleParticipation(models.Model):
     event = models.ForeignKey(RaffleEvent, on_delete=models.CASCADE)
@@ -45,13 +43,6 @@ class RaffleParticipation(models.Model):
         super().save(force_insert, force_update, using, update_fields)
 
 
-def file_visible_condition(request, instance):
-    user_logged_in = (not request.user.is_anonymous) and request.user.is_authenticated
-    owned_by_this_user = instance.added_by.pk == request.user.pk
-    user_is_admin = request.user.is_superuser
-    gift_is_unwrapped = not instance.wrapped
-    return user_logged_in and (owned_by_this_user or user_is_admin or gift_is_unwrapped)
-
 class Gift(models.Model):
     add_ts = models.DateTimeField(default=datetime.now, blank=True)
     description = models.CharField(max_length=120)
@@ -62,18 +53,8 @@ class Gift(models.Model):
     pixelated_image = models.ImageField(editable=False)
     event = models.ForeignKey(RaffleEvent, on_delete=CASCADE)
 
-    def _get_pixelated_image(self):
-        image_path = self.image.path
-        img = Image.open(BytesIO(self.image.file.read()))
-        img_small = img.resize((16, 16), resample=Image.BILINEAR)
-        result = img_small.resize(img.size, Image.NEAREST)
-        _, ext = splitext(image_path)
-        in_memory_file = BytesIO()
-        result.save(in_memory_file, format=ext.lstrip('.'))
-        self.pixelated_image = ContentFile(in_memory_file.getvalue(), 'pixelated-{}'.format(basename(image_path)))
-
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
-        self._get_pixelated_image()
+        self.pixelated_image = _get_pixelated_image(self.image)
         super().save(force_insert, force_update, using, update_fields)
 
     def __str__(self):
@@ -95,13 +76,13 @@ class Action(models.Model):
 
     @property
     def message(self):
-        if self.action_type == self.ActionType.CHOOSE_GIFT:
+        if self.action_type == Action.ActionType.CHOOSE_GIFT:
             return '{:%H:%M:%S}: {} unwrapped a {}'.format(
                 self.timestamp_ts,
                 self.by_user,
                 self.gift.description,
             )
-        elif self.action_type == self.ActionType.TRANSFERRED:
+        elif self.action_type == Action.ActionType.TRANSFERRED:
             return '{:%H:%m:%s}: {} transferred {} from {} to {}'.format(
                 self.timestamp_ts,
                 self.by_user,
