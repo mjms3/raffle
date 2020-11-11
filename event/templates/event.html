@@ -46,7 +46,8 @@
                         url: '{% url 'process_image_click' %}',
                         data: {
                             'image_id': image_id,
-                            'csrfmiddlewaretoken': '{{ csrf_token }}'
+                            'event_id': {{ view.kwargs.event_id }},
+                            'csrfmiddlewaretoken': '{{ csrf_token }}',
                         },
                         dataType: 'json',
                         success: function (data) {

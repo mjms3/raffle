@@ -45,8 +45,14 @@ class GiftCreateView(LoginRequiredMixin, CreateView):
 
 @login_required
 def process_image_click(request):
+    event = get_object_or_404(RaffleEvent, id = request.POST['event_id'] )
+    if event.phase in (event.Phase.PRE_START, event.Phase.FINISHED):
+        return JsonResponse({'error': 'Raffle not in progress'})
     gift_id = int(request.POST['image_id'].replace('image-', ''))
     gift = get_object_or_404(Gift, id=gift_id)
+
+    assert gift.event is event, 'Gift: %s and event: %s are inconsistent' %(gift, event)
+
     data = {
         'image': gift.image.url,
         'element': '#{}'.format(request.POST['image_id'])
