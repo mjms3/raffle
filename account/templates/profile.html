@@ -1,11 +1,15 @@
 {% extends 'base.html' %}
 {% block header %}
     <div class="container">
-        <h1>User Profile</h1>
+        <h1>User Profile for {{ user.get_username }}</h1>
     </div>
 {% endblock %}
 
 
 {% block content %}
-    <p>User profile will be here</p>
+    <form action="{% url 'signup' %}" method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <input type="submit" value="Update">
+    </form>
 {% endblock %}
