@@ -5,6 +5,7 @@ from os.path import basename, splitext
 from PIL import Image
 from django.contrib.auth.models import User
 from django.core.files.base import ContentFile
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import CASCADE
 from django.utils.translation import gettext_lazy as _
@@ -27,6 +28,21 @@ class RaffleEvent(models.Model):
     def __str__(self):
         return self.name
 
+class RaffleParticipation(models.Model):
+    event = models.ForeignKey(RaffleEvent, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    number_of_tickets = models.IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(100)]
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['event', 'user'], name='event_user_uq')
+        ]
+
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        assert self.event.phase == RaffleEvent.Phase.PRE_START, 'Can not update participation in a raffle after it has started'
+        super().save(force_insert, force_update, using, update_fields)
 
 
 def file_visible_condition(request, instance):
@@ -60,6 +76,8 @@ class Gift(models.Model):
         self._get_pixelated_image()
         super().save(force_insert, force_update, using, update_fields)
 
+    def __str__(self):
+        return self.description
 
 class Action(models.Model):
     event = models.ForeignKey(RaffleEvent, on_delete=CASCADE)
