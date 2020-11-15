@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block header %}
+    <div class="container">
+        <h1>Purchase Tickets</h1>
+    </div>
+{% endblock %}
+
+
+{% block content %}
+    <p>Note that purchasing tickets here will commit you to... . Also, you will not be able to
+    change the number of tickets once the raffle has started.</p>
+    <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <input type="submit" value="Purchase">
+    </form>
+{% endblock %}

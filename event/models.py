@@ -53,17 +53,23 @@ class RaffleParticipation(models.Model):
         ]
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
-        if self.event.phase == RaffleEvent.Phase.PRE_START and self.number_of_times_drawn!=0:
+        self._ensure_safe_to_modify()
+        super().save(force_insert, force_update, using, update_fields)
+
+    def full_clean(self, exclude=None, validate_unique=True):
+        self._ensure_safe_to_modify()
+        return super().full_clean(exclude, validate_unique)
+
+    def _ensure_safe_to_modify(self):
+        if self.event.phase == RaffleEvent.Phase.PRE_START and self.number_of_times_drawn != 0:
             raise Exception('Pre start and tickets have been drawn?!')
         elif self.event.phase == RaffleEvent.Phase.NORMAL_RAFFLE and self.tracker.has_changed('number_of_tickets'):
             raise Exception('Cant change number of available tickets during the raffle')
         elif self.event.phase in (RaffleEvent.Phase.GIFT_SWAP, RaffleEvent.Phase.FINISHED):
             raise Exception('Should not be updating details of raffle participation after raffle has finished')
-        else:
-            super().save(force_insert, force_update, using, update_fields)
 
     def __str__(self):
-        return 'Participation of %s in %s' %(self.user, self.event)
+        return '%i tickets for %s in %s' % (self.number_of_tickets, self.user, self.event)
 
 def file_visible_condition(request, instance):
     user_logged_in = (not request.user.is_anonymous) and request.user.is_authenticated

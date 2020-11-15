@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block header %}
+    <div class="container">
+        <h1>Donations</h1>
+    </div>
+{% endblock %}
+
+
+{% block content %}
+    <p>Number of tickets purchased can be changed by clicking on the name of the event.</p>
+    <p>Purchase tickets <a href="{% url 'create_participation' %}">here</a>.</p>
+    {% if object_list %}
+    <table class="table">
+        <thead>
+        <tr>
+            <th scope="col">Event</th>
+            <th scope="col">User</th>
+            <th scope="col">Tickets</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for participation in object_list %}
+            <tr>
+                <th scope="row"><a href="{% url 'update_participation' participation.id %}">{{ participation.event }}</a></th>
+                <td>{{ participation.user }}</td>
+                <td>{{ participation.number_of_tickets }}</td>
+            <td><a href="{% url 'delete_participation' participation.id %}">Remove Tickets</a></td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {%  endif %}
+
+{% endblock %}
+

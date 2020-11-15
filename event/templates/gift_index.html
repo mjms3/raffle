@@ -8,6 +8,8 @@
 
 {% block content %}
     <p>Donations can be updated by clicking on the name of the donation.</p>
+    <p>Donate new items <a href="{% url 'gift_create' %}">here</a>.</p>
+    {% if object_list %}
     <table class="table">
         <thead>
         <tr>
@@ -29,5 +31,6 @@
         {% endfor %}
         </tbody>
     </table>
+    {% endif %}
 {% endblock %}
 

@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block header %}
+    <div class="container">
+        <h1>Stop Participating in {{ object.event }}</h1>
+    </div>
+{% endblock %}
+
+
+{% block content %}
+    <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <p>Are you sure you want to remove {{ object }}?</p>
+    <input type="submit" value="Confirm">
+    </form>
+{% endblock %}k

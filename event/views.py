@@ -6,7 +6,7 @@ from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 
-from event.models import Action, Gift, RaffleEvent, _pick_next_person
+from event.models import Action, Gift, RaffleEvent, _pick_next_person, RaffleParticipation
 
 
 class EventView(LoginRequiredMixin, ListView):
@@ -30,7 +30,6 @@ class MyGiftsView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         return Gift.objects.filter(added_by=self.request.user)
-
 
 class GiftCreateView(LoginRequiredMixin, CreateView):
     model = Gift
@@ -63,6 +62,45 @@ class GiftDeleteView(LoginRequiredMixin, DeleteView):
     def get_queryset(self):
         base_qs = super(GiftDeleteView, self).get_queryset()
         return base_qs.filter(added_by=self.request.user)
+
+class MyTicketsView(LoginRequiredMixin, ListView):
+    template_name = 'ticket_index.html'
+    model = RaffleParticipation
+
+    def get_queryset(self):
+        return RaffleParticipation.objects.filter(user=self.request.user)
+
+class RaffleParticipationCreateView(LoginRequiredMixin, CreateView):
+    model = RaffleParticipation
+    fields = ['event','number_of_tickets']
+    template_name = 'ticket_form.html'
+    success_url = reverse_lazy('my_tickets')
+
+    def form_valid(self, form):
+        raffle_participation = form.save(commit=False)
+        raffle_participation.user = self.request.user
+        raffle_participation.save()
+        self.object = raffle_participation
+        return HttpResponseRedirect(self.get_success_url())
+
+class RaffleParticipationUpdateView(LoginRequiredMixin, UpdateView):
+    model = RaffleParticipation
+    fields = ['number_of_tickets']
+    template_name = 'ticket_form.html'
+    success_url = reverse_lazy('my_tickets')
+
+    def get_queryset(self):
+        base_qs = super(RaffleParticipationUpdateView, self).get_queryset()
+        return base_qs.filter(user=self.request.user)
+
+class RaffleParticipationDeleteView(LoginRequiredMixin, DeleteView):
+    model = RaffleParticipation
+    success_url = reverse_lazy('my_tickets')
+    template_name = 'raffle_participation_delete_confirmation.html'
+
+    def get_queryset(self):
+        base_qs = super(RaffleParticipationDeleteView, self).get_queryset()
+        return base_qs.filter(user=self.request.user)
 
 @permission_required('change_raffleevent')
 def change_current_gift_picker(request, event_id):
