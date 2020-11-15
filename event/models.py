@@ -71,6 +71,7 @@ class RaffleParticipation(models.Model):
     def __str__(self):
         return '%i tickets for %s in %s' % (self.number_of_tickets, self.user, self.event)
 
+
 def file_visible_condition(request, instance):
     user_logged_in = (not request.user.is_anonymous) and request.user.is_authenticated
     owned_by_this_user = instance.added_by.pk == request.user.pk
@@ -79,15 +80,30 @@ def file_visible_condition(request, instance):
     return user_logged_in and (owned_by_this_user or user_is_admin or gift_is_unwrapped)
 
 
-def _get_pixelated_image(image_obj):
+RESIZE_WIDTH = 600
+
+
+def _process_image(image_obj):
     image_path = image_obj.path
     img = Image.open(BytesIO(image_obj.file.read()))
+
+    width_percentage = RESIZE_WIDTH / float(img.size[0])
+    horizontal_size = int((float(img.size[1]) * float(width_percentage)))
+    img_shrunk = img.resize((RESIZE_WIDTH, horizontal_size), Image.ANTIALIAS)
+    in_memory_file_for_normal_image = BytesIO()
+    image_file_name, ext = splitext(image_path)
+
+    img_shrunk.save(in_memory_file_for_normal_image, format=ext.lstrip('.'))
+
     img_small = img.resize((16, 16), resample=Image.BILINEAR)
-    result = img_small.resize(img.size, Image.NEAREST)
-    _, ext = splitext(image_path)
-    in_memory_file = BytesIO()
-    result.save(in_memory_file, format=ext.lstrip('.'))
-    return ContentFile(in_memory_file.getvalue(), 'pixelated-{}'.format(basename(image_path)))
+    pixelated_image = img_small.resize(img.size, Image.NEAREST)
+
+    in_memory_file_for_pixelated_image = BytesIO()
+    pixelated_image.save(in_memory_file_for_pixelated_image, format=ext.lstrip('.'))
+    return (
+        ContentFile(in_memory_file_for_normal_image.getvalue(), '{}.{}'.format(image_file_name, ext)),
+        ContentFile(in_memory_file_for_pixelated_image.getvalue(), 'pixelated-{}.{}'.format(image_file_name, ext)),
+    )
 
 
 def _pick_next_person(current_user, raffle_event):
@@ -126,7 +142,8 @@ class Gift(models.Model):
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         self._confirm_okay_to_change_model()
-        self.pixelated_image = _get_pixelated_image(self.image)
+
+        self.image, self.pixelated_image = _process_image(self.image)
         super().save(force_insert, force_update, using, update_fields)
 
     def delete(self, using=None, keep_parents=False):
