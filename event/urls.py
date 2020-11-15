@@ -3,8 +3,8 @@ from django.urls import path
 from event import views
 
 urlpatterns = [
-    path('<int:event_id>/',  views.EventView.as_view(), name='index'),
-    path('gifts/', views.GiftIndexView.as_view(), name='index'),
+    path('<int:event_id>/',  views.EventView.as_view(), name='event_index'),
+    path('gifts/', views.GiftIndexView.as_view(), name='gift_index'),
     path('gifts/donate', views.GiftCreateView.as_view(), name='gift_create'),
     path('gifts/donations', views.MyGiftsView.as_view(), name='my_donations'),
     path('api/process_image_click/', views.process_image_click, name='process_image_click'),
