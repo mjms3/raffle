@@ -10,20 +10,15 @@
     </style>
 {% endblock %}
 
-{% block header %}
-    <div class="container">
-        <h1>Raffle</h1>
-    </div>
-{% endblock %}
-
 {% block container %}
     <div class="container-fluid">
         <div class="row">
-            <div class="col">
-                <h1>Event Stream</h1>
-                <ul class="list-group" id="action-stream"></ul>
+            <div class="col-lg-3">
+                <div class="sticky-top">
+                    <ul class="list-group" id="action-stream"></ul>
+                    </div>
             </div>
-            <div class="col-9">
+            <div class="col-lg-9">
                 {% for gift in object_list %}
                     <tr>
                         <td>
@@ -33,59 +28,60 @@
                 {% endfor %}
             </div>
         </div>
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-        <script language="JavaScript" type="text/javascript">
-            window.onload = function () {
-                $("[id^=image]").on("click", function () {
-                    var image_id = this.id;
-                    $.ajax({
-                        type: 'POST',
-                        url: '{% url 'process_image_click' %}',
-                        data: {
-                            'image_id': image_id,
-                            'event_id': {{ view.kwargs.event_id }},
-                            'csrfmiddlewaretoken': '{{ csrf_token }}',
-                        },
-                        dataType: 'json',
-                        success: function (data) {
-                            if (data['error']!==null){
-                                alert(data['error'])
-                            }
-                        }
-                    });
-                });
-            }
-            $(document).ready(function () {
-                $('#action-stream').data("last_processed_action", 0);
-
-                function poll() {
-                    $.post({
-                        url: '{% url 'event_stream' %}',
-                        data: {
-                            'last_processed_action': $('#action-stream').data("last_processed_action"),
-                            'event_id': {{ view.kwargs.event_id }},
-                            'csrfmiddlewaretoken': '{{ csrf_token }}'
-                        },
-                        success: function (data) {
-                            var list = document.getElementById('action-stream');
-                            for (activity of data['activity']) {
-                                var entry = document.createElement('li');
-                                entry.appendChild(document.createTextNode(activity));
-                                list.appendChild(entry);
-                            }
-                            $('#action-stream').data("last_processed_action", data["last_event"]);
-                            for (image_id of Object.keys(data['image_urls'])){
-                                $('#'+image_id).attr('src', data['image_urls'][image_id]);
-                            }
-                        },
-                        timeout: 5000
-                    }).always(function () {
-                        setTimeout(poll, 5000)
-                    })
-                }
-
-                poll();
-            })
-        </script>
     </div>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script language="JavaScript" type="text/javascript">
+        window.onload = function () {
+            $("[id^=image]").on("click", function () {
+                var image_id = this.id;
+                $.ajax({
+                    type: 'POST',
+                    url: '{% url 'process_image_click' %}',
+                    data: {
+                        'image_id': image_id,
+                        'event_id': {{ view.kwargs.event_id }},
+                        'csrfmiddlewaretoken': '{{ csrf_token }}',
+                    },
+                    dataType: 'json',
+                    success: function (data) {
+                        if (data['error'] !== null) {
+                            alert(data['error'])
+                        }
+                    }
+                });
+            });
+        }
+        $(document).ready(function () {
+            $('#action-stream').data("last_processed_action", 0);
+
+            function poll() {
+                $.post({
+                    url: '{% url 'event_stream' %}',
+                    data: {
+                        'last_processed_action': $('#action-stream').data("last_processed_action"),
+                        'event_id': {{ view.kwargs.event_id }},
+                        'csrfmiddlewaretoken': '{{ csrf_token }}'
+                    },
+                    success: function (data) {
+                        var list = document.getElementById('action-stream');
+                        for (activity of data['activity']) {
+                            var entry = document.createElement('li');
+                            entry.setAttribute('class', 'list-group-item')
+                            entry.appendChild(document.createTextNode(activity));
+                            list.appendChild(entry);
+                        }
+                        $('#action-stream').data("last_processed_action", data["last_event"]);
+                        for (image_id of Object.keys(data['image_urls'])) {
+                            $('#' + image_id).attr('src', data['image_urls'][image_id]);
+                        }
+                    },
+                    timeout: 5000
+                }).always(function () {
+                    setTimeout(poll, 5000)
+                })
+            }
+
+            poll();
+        })
+    </script>
 {% endblock %}
