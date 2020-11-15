@@ -151,7 +151,11 @@ def process_image_click(request):
             gift.save()
             action.save()
             _pick_next_person(current_user=request.user, raffle_event=raffle_event)
-        return JsonResponse({'error': None})
+        return JsonResponse({
+            'error': None,
+            'gift_description': gift.description,
+            'gift_image_url': gift.image_url,
+        })
     elif raffle_event.phase == raffle_event.Phase.GIFT_SWAP:
         return JsonResponse({'modal_data': {
             'gift_id': gift.id,

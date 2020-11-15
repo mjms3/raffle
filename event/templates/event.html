@@ -29,17 +29,34 @@
         </div>
     </div>
 
-    <div class="row row-offcanvas row-offcanvas-left vh-100">
-        <div class="col-md-4 col-lg-4 sidebar-offcanvas h-100 overflow-auto bg-light pl-0" id="sidebar"
-             role="navigation">
-            <ul class="nav flex-column sticky-top pl-0 pt-5 mt-3" id="action-stream">
-            </ul>
+    <div class="modal" id="unwrapModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="unwrapModalTitle"></h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <img src="" id="unwrapModalImage" class="img-fluid" alt="">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
         </div>
-        <div class="col main pt-5 mt-3 h-100 overflow-auto">
-            <div class="row">
-                {% for gift in object_list %}
+    </div>
 
-
+        <div class="row row-offcanvas row-offcanvas-left vh-100">
+            <div class="col-md-4 col-lg-4 sidebar-offcanvas h-100 overflow-auto bg-light pl-0" id="sidebar"
+                 role="navigation">
+                <ul class="nav flex-column sticky-top pl-0 pt-5 mt-3" id="action-stream">
+                </ul>
+            </div>
+            <div class="col main pt-5 mt-3 h-100 overflow-auto">
+                <div class="row">
+                    {% for gift in object_list %}
                     <div class="col-lg-3 px-0">
                         <img class="img-fluid" id="{{ gift.image_id }}" src="{{ gift.image_url }}" alt="">
                     </div>
@@ -72,6 +89,11 @@
                     success: function (data) {
                         if ('error' in data && data['error'] !== null) {
                             alert(data['error']);
+                        }
+                        if ('gift_image_url' in data){
+                            $('#unwrapModalTitle').text('You unwrapped a '+data['gift_description']);
+                            $('#unwrapModalImage').attr('src',data['gift_image_url']);
+                            $('#unwrapModal').modal();
                         }
                         if ('modal_data' in data) {
                             var giftSwapModal = $('#giftSwapModal');
