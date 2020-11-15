@@ -119,10 +119,17 @@ class Gift(models.Model):
     tracker = FieldTracker(fields=('description',))
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
-        if self.event.phase != RaffleEvent.Phase.PRE_START and self.tracker.previous('description') is None:
-            raise Exception("Can't add an item to the raffle after it has started")
+        self._confirm_okay_to_change_model()
         self.pixelated_image = _get_pixelated_image(self.image)
         super().save(force_insert, force_update, using, update_fields)
+
+    def delete(self, using=None, keep_parents=False):
+        self._confirm_okay_to_change_model()
+        return super().delete(using, keep_parents)
+
+    def _confirm_okay_to_change_model(self):
+        if self.event.phase != RaffleEvent.Phase.PRE_START and self.tracker.previous('description') is None:
+            raise Exception("Can't add an item to the raffle after it has started")
 
     def __str__(self):
         return self.description

@@ -7,6 +7,7 @@
 
 
 {% block content %}
+    <p>Donations can be updated by clicking on the name of the donation.</p>
     <table class="table">
         <thead>
         <tr>
@@ -19,10 +20,11 @@
         <tbody>
         {% for gift in object_list %}
             <tr>
-                <th scope="row">{{ gift.description }}</th>
+                <th scope="row"><a href="{% url 'update_gift' gift.id %}">{{ gift.description }}</a></th>
                 <td>{{ gift.added_by }}</td>
                 <td><img src="{{ gift.image.url }}" class="img-fluid" alt="Responsive image"></td>
                 <td><img src="{{ gift.pixelated_image.url }}" class="img-fluid" alt="Responsive image"></td>
+            <td><a href="{% url 'delete_gift' gift.id %}">Remove donation</a></td>
             </tr>
         {% endfor %}
         </tbody>

@@ -4,7 +4,7 @@ from django.db import transaction
 from django.http import JsonResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
-from django.views.generic import ListView, CreateView
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 
 from event.models import Action, Gift, RaffleEvent, _pick_next_person
 
@@ -45,6 +45,24 @@ class GiftCreateView(LoginRequiredMixin, CreateView):
         self.object = gift
         return HttpResponseRedirect(self.get_success_url())
 
+class GiftUpdateView(LoginRequiredMixin, UpdateView):
+    model = Gift
+    fields = ['description', 'image', 'event']
+    template_name = 'gift_form.html'
+    success_url = reverse_lazy('my_donations')
+
+    def get_queryset(self):
+        base_qs = super(GiftUpdateView, self).get_queryset()
+        return base_qs.filter(added_by=self.request.user)
+
+class GiftDeleteView(LoginRequiredMixin, DeleteView):
+    model = Gift
+    success_url = reverse_lazy('my_donations')
+    template_name = 'gift_delete_confirmation.html'
+
+    def get_queryset(self):
+        base_qs = super(GiftDeleteView, self).get_queryset()
+        return base_qs.filter(added_by=self.request.user)
 
 @permission_required('change_raffleevent')
 def change_current_gift_picker(request, event_id):
