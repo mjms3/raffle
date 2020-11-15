@@ -17,7 +17,6 @@ from private_files import PrivateFileField
 from raffle import settings
 
 
-
 class RaffleEvent(models.Model):
     name = models.CharField(max_length=250, unique=True)
 
@@ -28,7 +27,8 @@ class RaffleEvent(models.Model):
         FINISHED = 'F', _('Finished')
 
     phase = models.CharField(max_length=1,choices=Phase.choices)
-    current_user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,null=True, blank=True)
+    current_user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,null=True, blank=True, related_name='picking_in_raffles')
+    participants = models.ManyToManyField(settings.AUTH_USER_MODEL, through='RaffleParticipation')
 
     def __str__(self):
         return self.name

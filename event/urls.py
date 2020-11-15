@@ -14,6 +14,7 @@ urlpatterns = [
     path('tickets/update/<pk>/', views.RaffleParticipationUpdateView.as_view(), name='update_participation'),
     path('tickets/delete/<pk>/', views.RaffleParticipationDeleteView.as_view(), name='delete_participation'),
     path('api/process_image_click/', views.process_image_click, name='process_image_click'),
+    path('api/process_swap_gift/', views.process_swap_gift, name='process_swap_gift'),
     path('api/stream/', views.stream, name='event_stream'),
     path('api/change_picker/<int:event_id>', views.change_current_gift_picker, name='change_picker')
 ]

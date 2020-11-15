@@ -6,7 +6,9 @@ from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 
+from account.models import CustomUser
 from event.models import Action, Gift, RaffleEvent, _pick_next_person, RaffleParticipation
+from raffle import settings
 
 
 class EventView(LoginRequiredMixin, ListView):
@@ -17,6 +19,11 @@ class EventView(LoginRequiredMixin, ListView):
         event = get_object_or_404(RaffleEvent, id=self.kwargs['event_id'])
         return Gift.objects.filter(event=event)
 
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super().get_context_data(object_list=object_list, **kwargs)
+        event = get_object_or_404(RaffleEvent, id=self.kwargs['event_id'])
+        context['user_mapping'] = sorted((u.id, u.username) for u in event.participants.all())
+        return context
 
 class GiftIndexView(PermissionRequiredMixin, ListView):
     permission_required = 'view_gift'
@@ -116,31 +123,67 @@ def process_image_click(request):
     raffle_event = get_object_or_404(RaffleEvent, id=request.POST['event_id'])
     if raffle_event.phase in (raffle_event.Phase.PRE_START, raffle_event.Phase.FINISHED):
         return JsonResponse({'error': 'Raffle not in progress'})
-    if raffle_event.current_user != request.user:
-        return JsonResponse({'error': "It's not your turn to pick a gift!"})
 
     gift_id = int(request.POST['image_id'].replace('image-', ''))
     gift = get_object_or_404(Gift, id=gift_id)
-    if gift.event != raffle_event:
-        return JsonResponse({'error':'Gift: %s and RaffleEvent: %s are inconsistent' % (gift, raffle_event)})
-    if not gift.wrapped:
-        return JsonResponse({'error':'Gift already unwrapped'})
 
-    gift.given_to = request.user
-    gift.wrapped = False
-    action = Action(gift=gift,
-                    from_user=gift.added_by,
-                    to_user=request.user,
-                    by_user=request.user,
-                    action_type=Action.ActionType.CHOOSE_GIFT,
-                    event=raffle_event,
-                    )
+    if raffle_event.phase == raffle_event.Phase.NORMAL_RAFFLE:
+        if raffle_event.current_user != request.user:
+            return JsonResponse({'error': "It's not your turn to pick a gift!"})
+        if raffle_event.gift_set.filter(wrapped=True).count() == 0:
+            return JsonResponse({'error': "All gifts have been unwrapped."})
+
+        if gift.event != raffle_event:
+            return JsonResponse({'error': 'Gift: %s and RaffleEvent: %s are inconsistent' % (gift, raffle_event)})
+        if not gift.wrapped:
+            return JsonResponse({'error': 'Gift already unwrapped'})
+
+        gift.given_to = request.user
+        gift.wrapped = False
+        action = Action(gift=gift,
+                        from_user=gift.added_by,
+                        to_user=request.user,
+                        by_user=request.user,
+                        action_type=Action.ActionType.CHOOSE_GIFT,
+                        event=raffle_event,
+                        )
+        with transaction.atomic():
+            gift.save()
+            action.save()
+            _pick_next_person(current_user=request.user, raffle_event=raffle_event)
+        return JsonResponse({'error': None})
+    elif raffle_event.phase == raffle_event.Phase.GIFT_SWAP:
+        return JsonResponse({'modal_data': {
+            'gift_id': gift.id,
+            'gift_description': gift.description,
+            'current_user_username': gift.given_to.username,
+            'current_user_id': gift.given_to_id,
+        }})
+
+
+@login_required
+def process_swap_gift(request):
+    raffle_event = get_object_or_404(RaffleEvent, id=request.POST['event_id'])
+    if raffle_event.phase != RaffleEvent.Phase.GIFT_SWAP:
+        return JsonResponse({'error': 'Gift swap not in progress'})
+
     with transaction.atomic():
-        gift.save()
+        gift = get_object_or_404(Gift, id=request.POST['gift_id'])
+        if gift.given_to_id != int(request.POST['current_user_id']):
+            return JsonResponse(
+                {'error': 'Looks like someone else has already swapped the owner of %s' % gift.description})
+        swap_to = get_object_or_404(CustomUser, id=request.POST['to_user_id'])
+        action = Action(gift=gift,
+                        from_user=gift.given_to,
+                        to_user=swap_to,
+                        by_user=request.user,
+                        action_type=Action.ActionType.TRANSFERRED,
+                        event=raffle_event,
+                        )
+        gift.given_to = swap_to
         action.save()
-        _pick_next_person(current_user=request.user, raffle_event=raffle_event)
+        gift.save()
     return JsonResponse({'error':None})
-
 
 @login_required
 def stream(request):

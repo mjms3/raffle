@@ -11,12 +11,40 @@
 {% endblock %}
 
 {% block container %}
+    <div class="modal" id="giftSwapModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Swap gift</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="form-group">
+                            <label id="toUserSelectLabel" for="toUserSelect">Pay 5 pounds to swap xxx from yyy to:</label>
+                            <select class="form-control" id="toUserSelect">
+                                {% for user_id, username in user_mapping %}
+                                    <option value="{{ user_id }}">{{ username }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="swapButton">Swap</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="container-fluid">
         <div class="row">
             <div class="col-lg-3">
                 <div class="sticky-top">
                     <ul class="list-group" id="action-stream"></ul>
-                    </div>
+                </div>
             </div>
             <div class="col-lg-9">
                 {% for gift in object_list %}
@@ -29,9 +57,9 @@
             </div>
         </div>
     </div>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script language="JavaScript" type="text/javascript">
         window.onload = function () {
+            {# Process image clicks#}
             $("[id^=image]").on("click", function () {
                 var image_id = this.id;
                 $.ajax({
@@ -44,14 +72,24 @@
                     },
                     dataType: 'json',
                     success: function (data) {
-                        if (data['error'] !== null) {
-                            alert(data['error'])
+                        if ('error' in data && data['error'] !== null) {
+                            alert(data['error']);
+                        }
+                        if ('modal_data' in data) {
+                            var giftSwapModal = $('#giftSwapModal');
+                            giftSwapModal.data("current_user_id", data['modal_data']['current_user_id']);
+                            giftSwapModal.data("gift_id", data['modal_data']['gift_id']);
+                            $('#toUserSelectLabel').text('Pay 5 pounds to swap ' + data['modal_data']['gift_description'] + ' from ' + data['modal_data']['current_user_username'] + ' to:')
+                            giftSwapModal.modal();
                         }
                     }
                 });
             });
         }
+
+
         $(document).ready(function () {
+            {# Poll the event stream#}
             $('#action-stream').data("last_processed_action", 0);
 
             function poll() {
@@ -82,6 +120,29 @@
             }
 
             poll();
+
+            {# Process gift swap form submission#}
+            $("#swapButton").on("click", function () {
+                var giftSwapModal = $('#giftSwapModal');
+                $.ajax({
+                    type: 'POST',
+                    url: '{% url 'process_swap_gift' %}',
+                    data: {
+                        'current_user_id': giftSwapModal.data('current_user_id'),
+                        'gift_id': giftSwapModal.data('gift_id'),
+                        'to_user_id': $("#toUserSelect :selected").val(),
+                        'event_id': {{ view.kwargs.event_id }},
+                        'csrfmiddlewaretoken': '{{ csrf_token }}',
+                    },
+                    dataType: 'json',
+                    success: function (data) {
+                        if ('error' in data && data['error'] !== null) {
+                            alert(data['error']);
+                        }
+                        $('#giftSwapModal').modal('hide')
+                    }
+                });
+            });
         })
     </script>
 {% endblock %}
