@@ -9,11 +9,14 @@ https://docs.djangoproject.com/en/3.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
-
+import os
 from pathlib import Path
+import environ
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-from raffle.connection_details import connection_details
+env = environ.Env(
+    DEBUG=(bool, False)
+)
+environ.Env.read_env()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -22,12 +25,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'c5&cd)d@1n@#u%&^8=n%ko2(krqs(3o!-kp15aig(qk2)czx!8'
+SECRET_KEY = env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [env('ALLOWED_HOST')]
 
 
 # Application definition
@@ -35,7 +38,7 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = [
     'event',
     'account',
-    'private_files',
+    'storages',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -79,7 +82,17 @@ WSGI_APPLICATION = 'raffle.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
-DATABASES = connection_details
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': env('RDS_DB_NAME'),
+        'USER': env('RDS_USERNAME'),
+        'PASSWORD': env('RDS_PASSWORD'),
+        'HOST': env('RDS_HOSTNAME'),
+        'PORT': env('RDS_PORT'),
+    }
+}
+
 
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators
@@ -113,13 +126,31 @@ USE_L10N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
+AWS_STORAGE_BUCKET_NAME = 'cboe-raffle-files'
+AWS_S3_REGION_NAME = 'eu-west-2'
+AWS_ACCESS_KEY_ID = env('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = env('AWS_SECRET_ACCESS_KEY')
+AWS_S3_OBJECT_PARAMETERS = {
+    'Expires': 'Thu, 31 Dec 2099 20:00:00 GMT',
+    'CacheControl': 'max-age=94608000',
+}
+# Tell django-storages the domain to use to refer to static files.
+AWS_S3_CUSTOM_DOMAIN = '%s.s3.amazonaws.com' % AWS_STORAGE_BUCKET_NAME
+
+# Tell the staticfiles app to use S3Boto3 storage when writing the collected static files (when
+# you run `collectstatic`).
+STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+
 STATIC_URL = '/static/'
 
-MEDIA_ROOT = '/var/www/raffle/media/'
+
+
+MEDIAFILES_LOCATION = 'media'
+DEFAULT_FILE_STORAGE = 'custom_storages.MediaStorage'
+
 MEDIA_URL = '/media/'
 
 LOGIN_REDIRECT_URL = '/'

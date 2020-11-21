@@ -12,8 +12,8 @@ from django.db.models import CASCADE
 from django.db.models import F
 from django.utils.translation import gettext_lazy as _
 from model_utils import FieldTracker
-from private_files import PrivateFileField
 
+from custom_storages import MediaStorage
 from raffle import settings
 
 
@@ -84,14 +84,14 @@ RESIZE_WIDTH = 600
 
 
 def _process_image(image_obj):
-    image_path = image_obj.path
     img = Image.open(BytesIO(image_obj.file.read()))
 
     width_percentage = RESIZE_WIDTH / float(img.size[0])
     horizontal_size = int((float(img.size[1]) * float(width_percentage)))
     img_shrunk = img.resize((RESIZE_WIDTH, horizontal_size), Image.ANTIALIAS)
     in_memory_file_for_normal_image = BytesIO()
-    image_file_name, ext = splitext(image_path)
+    image_file_name, ext = splitext(image_obj.file.name)
+    ext = ext.lstrip('.')
 
     img_shrunk.save(in_memory_file_for_normal_image, format=ext.lstrip('.'))
 
@@ -99,10 +99,13 @@ def _process_image(image_obj):
     pixelated_image = img_small.resize(img.size, Image.NEAREST)
 
     in_memory_file_for_pixelated_image = BytesIO()
-    pixelated_image.save(in_memory_file_for_pixelated_image, format=ext.lstrip('.'))
+    pixelated_image.save(in_memory_file_for_pixelated_image, format=ext)
+    now_str = datetime.now().strftime('%Y%m%d%H%M%S%f')
     return (
-        ContentFile(in_memory_file_for_normal_image.getvalue(), '{}.{}'.format(image_file_name, ext)),
-        ContentFile(in_memory_file_for_pixelated_image.getvalue(), 'pixelated-{}.{}'.format(image_file_name, ext)),
+        ContentFile(in_memory_file_for_normal_image.getvalue(),
+                    '{}/{}.{}'.format(now_str, hash(image_file_name), ext)),
+        ContentFile(in_memory_file_for_pixelated_image.getvalue(),
+                    '{}/pixelated-{}.{}'.format(now_str, image_file_name, ext)),
     )
 
 
@@ -133,8 +136,9 @@ class Gift(models.Model):
     description = models.CharField(max_length=120)
     wrapped = models.BooleanField(default=True)
     added_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.RESTRICT, editable=False, related_name='donations')
-    given_to = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.RESTRICT, blank=True, null=True, related_name='prizes')
-    image = PrivateFileField(condition=file_visible_condition)
+    given_to = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.RESTRICT, blank=True, null=True,
+                                 related_name='prizes')
+    image = models.ImageField(storage=MediaStorage)
     pixelated_image = models.ImageField(editable=False)
     event = models.ForeignKey(RaffleEvent, on_delete=CASCADE)
 

@@ -1,4 +1,8 @@
 venv
 .idea
-raffle/connection_details.py
+.env
 **/__pycache__
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml
