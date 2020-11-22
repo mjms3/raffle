@@ -7,6 +7,7 @@
 
 
 {% block content %}
+    <p>This page allows you to edit the email address associated with your user.</p>
     <form action="{% url 'signup' %}" method="post">
     {% csrf_token %}
     {{ form.as_p }}

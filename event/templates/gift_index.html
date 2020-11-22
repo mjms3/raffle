@@ -7,8 +7,9 @@
 
 
 {% block content %}
-    <p>Donations can be updated by clicking on the name of the donation.</p>
-    <p>Donate new items <a href="{% url 'gift_create' %}">here</a>.</p>
+    <p>Donations can be updated by clicking on the name of the donation.
+        Please confirm you are happy with the image and the pixelated version of the image
+        that will be used in the raffle.</p>
     {% if object_list %}
     <table class="table">
         <thead>
@@ -26,11 +27,13 @@
                 <td>{{ gift.added_by }}</td>
                 <td><img src="{{ gift.image.url }}" class="img-fluid" alt="Responsive image"></td>
                 <td><img src="{{ gift.pixelated_image.url }}" class="img-fluid" alt="Responsive image"></td>
-            <td><a href="{% url 'delete_gift' gift.id %}">Remove donation</a></td>
+                <td><a href="{% url 'delete_gift' gift.id %}">Remove donation</a></td>
             </tr>
         {% endfor %}
         </tbody>
     </table>
+    {% else %}
+        <p> Donate new items <a href="{% url 'gift_create' %}">here</a>.</p>
     {% endif %}
 {% endblock %}
 

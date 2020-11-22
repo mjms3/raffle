@@ -7,10 +7,11 @@
 
 
 {% block content %}
-    <p>Note that purchasing tickets here will commit you to... . Also, you will not be able to
-    change the number of tickets once the raffle has started.</p>
+    <p>Use the form below to purchase tickets. Note that purchasing tickets here commits you to donating &pound;5
+        per ticket to charity. Also, you will not be able to change the number of tickets once the raffle has
+        started.</p>
     <form method="post" enctype="multipart/form-data">
-    {% csrf_token %}
+        {% csrf_token %}
     {{ form.as_p }}
     <input type="submit" value="Purchase">
     </form>

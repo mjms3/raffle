@@ -8,7 +8,6 @@
 
 {% block content %}
     <p>Number of tickets purchased can be changed by clicking on the name of the event.</p>
-    <p>Purchase tickets <a href="{% url 'create_participation' %}">here</a>.</p>
     {% if object_list %}
     <table class="table">
         <thead>
@@ -21,15 +20,18 @@
         <tbody>
         {% for participation in object_list %}
             <tr>
-                <th scope="row"><a href="{% url 'update_participation' participation.id %}">{{ participation.event }}</a></th>
+                <th scope="row"><a
+                        href="{% url 'update_participation' participation.id %}">{{ participation.event }}</a></th>
                 <td>{{ participation.user }}</td>
                 <td>{{ participation.number_of_tickets }}</td>
-            <td><a href="{% url 'delete_participation' participation.id %}">Remove Tickets</a></td>
+                <td><a href="{% url 'delete_participation' participation.id %}">Remove Tickets</a></td>
             </tr>
         {% endfor %}
         </tbody>
     </table>
-    {%  endif %}
+    {% else %}
+        <p>Purchase tickets <a href="{% url 'create_participation' %}">here</a>.</p>
+    {% endif %}
 
 {% endblock %}
 
