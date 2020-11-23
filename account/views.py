@@ -13,7 +13,7 @@ from account.forms import CustomUserCreationForm, CustomUserChangeForm
 class NewUserView(FormView):
     form_class = CustomUserCreationForm
     template_name = 'user_form.html'
-    success_url = reverse_lazy('user_profile')
+    success_url = reverse_lazy('home')
 
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
