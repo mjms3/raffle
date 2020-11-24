@@ -16,16 +16,42 @@ import environ
 env = environ.Env(
     DEBUG=(bool, False)
 )
-environ.Env.read_env()
+DEBUG = env('DEBUG')
+if DEBUG:
+    environ.Env.read_env()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+if not DEBUG:
+    import logging.config
+    LOGGING_CONFIG = None
+    logging.config.dictConfig({
+        'version': 1,
+        'disable_existing_loggers': False,
+        'formatters': {
+            'console': {
+                'format': '%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
+            },
+        },
+        'handlers': {
+            'console': {
+                'class': 'logging.StreamHandler',
+                'formatter': 'console',
+            },
+        },
+        'loggers': {
+            '': {
+                'level': 'WARNING',
+                'handlers': ['console'],
+            },
+        },
+    })
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
 SECRET_KEY = env('SECRET_KEY')
-DEBUG = env('DEBUG')
+
 
 ALLOWED_HOSTS = [env('ALLOWED_HOST')]
 
