@@ -95,8 +95,8 @@ def _process_image(image_obj):
 
     img_shrunk.save(in_memory_file_for_normal_image, format=img.format)
 
-    img_small = img.resize((16, 16), resample=Image.BILINEAR)
-    pixelated_image = img_small.resize(img.size, Image.NEAREST)
+    img_small = img_shrunk.resize((16, 16), resample=Image.BILINEAR)
+    pixelated_image = img_small.resize(img_shrunk.size, Image.NEAREST)
 
     in_memory_file_for_pixelated_image = BytesIO()
     pixelated_image.save(in_memory_file_for_pixelated_image, format=img.format)
