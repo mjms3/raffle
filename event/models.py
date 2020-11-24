@@ -10,6 +10,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import CASCADE
 from django.db.models import F
+from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 from model_utils import FieldTracker
 
@@ -91,21 +92,21 @@ def _process_image(image_obj):
     img_shrunk = img.resize((RESIZE_WIDTH, horizontal_size), Image.ANTIALIAS)
     in_memory_file_for_normal_image = BytesIO()
     image_file_name, ext = splitext(image_obj.file.name)
-    ext = ext.lstrip('.')
 
-    img_shrunk.save(in_memory_file_for_normal_image, format=ext.lstrip('.'))
+    img_shrunk.save(in_memory_file_for_normal_image, format=img.format)
 
     img_small = img.resize((16, 16), resample=Image.BILINEAR)
     pixelated_image = img_small.resize(img.size, Image.NEAREST)
 
     in_memory_file_for_pixelated_image = BytesIO()
-    pixelated_image.save(in_memory_file_for_pixelated_image, format=ext)
-    now_str = datetime.now().strftime('%Y%m%d%H%M%S%f')
+    pixelated_image.save(in_memory_file_for_pixelated_image, format=img.format)
     return (
         ContentFile(in_memory_file_for_normal_image.getvalue(),
-                    '{}/{}.{}'.format(now_str, hash(image_file_name), ext)),
+                    '{}/{}{}'.format(hash(datetime.now().strftime('%Y%m%d%H%M%S%f')),
+                                      hash(image_file_name), ext)),
         ContentFile(in_memory_file_for_pixelated_image.getvalue(),
-                    '{}/pixelated-{}.{}'.format(now_str, image_file_name, ext)),
+                    '{}/pixelated-{}{}'.format(datetime.now().strftime('%Y%m%d%H%M%S'),
+                                                slugify(image_file_name), ext)),
     )
 
 
