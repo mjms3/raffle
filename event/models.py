@@ -84,22 +84,26 @@ def file_visible_condition(request, instance):
 RESIZE_WIDTH = 600
 
 
-def _process_image(image_obj):
-    img = Image.open(BytesIO(image_obj.file.read()))
-
-    width_percentage = RESIZE_WIDTH / float(img.size[0])
-    horizontal_size = int((float(img.size[1]) * float(width_percentage)))
-    img_shrunk = img.resize((RESIZE_WIDTH, horizontal_size), Image.ANTIALIAS)
-    in_memory_file_for_normal_image = BytesIO()
+def _process_image(image_obj, new_image_data):
     image_file_name, ext = splitext(image_obj.file.name)
 
-    img_shrunk.save(in_memory_file_for_normal_image, format=img.format)
+    if new_image_data is not None:
+        in_memory_file_for_normal_image, in_memory_file_for_pixelated_image = new_image_data
+    else:
+        img = Image.open(BytesIO(image_obj.file.read()))
 
-    img_small = img_shrunk.resize((16, 16), resample=Image.BILINEAR)
-    pixelated_image = img_small.resize(img_shrunk.size, Image.NEAREST)
+        width_percentage = RESIZE_WIDTH / float(img.size[0])
+        horizontal_size = int((float(img.size[1]) * float(width_percentage)))
+        img_shrunk = img.resize((RESIZE_WIDTH, horizontal_size), Image.ANTIALIAS)
+        in_memory_file_for_normal_image = BytesIO()
 
-    in_memory_file_for_pixelated_image = BytesIO()
-    pixelated_image.save(in_memory_file_for_pixelated_image, format=img.format)
+        img_shrunk.save(in_memory_file_for_normal_image, format=img.format)
+
+        img_small = img_shrunk.resize((16, 16), resample=Image.BILINEAR)
+        pixelated_image = img_small.resize(img_shrunk.size, Image.NEAREST)
+
+        in_memory_file_for_pixelated_image = BytesIO()
+        pixelated_image.save(in_memory_file_for_pixelated_image, format=img.format)
     return (
         ContentFile(in_memory_file_for_normal_image.getvalue(),
                     '{}/{}{}'.format(hash(datetime.now().strftime('%Y%m%d%H%M%S%f')),
@@ -145,10 +149,16 @@ class Gift(models.Model):
 
     tracker = FieldTracker(fields=('description',))
 
-    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+    def save(self,
+             force_insert=False,
+             force_update=False,
+             using=None,
+             update_fields=None,
+             new_image_data=None,
+             ):
         self._confirm_okay_to_change_model()
 
-        self.image, self.pixelated_image = _process_image(self.image)
+        self.image, self.pixelated_image = _process_image(self.image, new_image_data)
         super().save(force_insert, force_update, using, update_fields)
 
     def delete(self, using=None, keep_parents=False):

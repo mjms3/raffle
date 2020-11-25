@@ -26,4 +26,4 @@ urlpatterns = [
                   path('accounts/', include('account.urls')),
                   path('event/', include('event.urls')),
                   path('', HomePageView.as_view(), name='home')
-              ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+              ]

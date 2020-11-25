@@ -4,7 +4,7 @@
         <h1>Donations</h1>
     </div>
 {% endblock %}
-
+{% load static %}
 
 {% block content %}
     <p>Donations can be updated by clicking on the name of the donation.
@@ -18,6 +18,7 @@
             <th scope="col">Donated by</th>
             <th scope="col">Image</th>
             <th scope="col">Pixelated Image</th>
+            <th scope="col">Rotate Image</th>
         </tr>
         </thead>
         <tbody>
@@ -27,6 +28,14 @@
                 <td>{{ gift.added_by }}</td>
                 <td><img src="{{ gift.image.url }}" class="img-fluid" alt="Responsive image"></td>
                 <td><img src="{{ gift.pixelated_image.url }}" class="img-fluid" alt="Responsive image"></td>
+                <td>
+                    <a href="{% url 'rotate_image' gift.id 270 %}">
+                    <img src="{% static 'icons/action-redo-6x.png' %}" alt="Rotate Left">
+                        </a>
+                    <a href="{% url 'rotate_image' gift.id 90 %}">
+                    <img src="{% static 'icons/action-undo-6x.png' %}" alt="Rotate Right">
+                    </a>
+                </td>
                 <td><a href="{% url 'delete_gift' gift.id %}">Remove donation</a></td>
             </tr>
         {% endfor %}

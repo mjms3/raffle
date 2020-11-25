@@ -1,14 +1,16 @@
+from io import BytesIO
+
+from PIL import Image
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import PermissionRequiredMixin, LoginRequiredMixin
 from django.db import transaction
-from django.http import JsonResponse, HttpResponseRedirect
+from django.http import JsonResponse, HttpResponseRedirect, HttpResponseForbidden, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 
 from account.models import CustomUser
 from event.models import Action, Gift, RaffleEvent, _pick_next_person, RaffleParticipation
-from raffle import settings
 
 
 class EventView(LoginRequiredMixin, ListView):
@@ -30,13 +32,16 @@ class GiftIndexView(PermissionRequiredMixin, ListView):
     template_name = 'gift_index.html'
     model = Gift
 
+    def get_queryset(self):
+        return super().get_queryset().order_by('add_ts')
+
 
 class MyGiftsView(LoginRequiredMixin, ListView):
     template_name = 'gift_index.html'
     model = Gift
 
     def get_queryset(self):
-        return Gift.objects.filter(added_by=self.request.user)
+        return Gift.objects.filter(added_by=self.request.user).order_by('add_ts')
 
 class GiftCreateView(LoginRequiredMixin, CreateView):
     model = Gift
@@ -109,13 +114,37 @@ class RaffleParticipationDeleteView(LoginRequiredMixin, DeleteView):
         base_qs = super(RaffleParticipationDeleteView, self).get_queryset()
         return base_qs.filter(user=self.request.user)
 
+
 @permission_required('change_raffleevent')
 def change_current_gift_picker(request, event_id):
     raffle_event = get_object_or_404(RaffleEvent, id=event_id)
     current_user = request.user
     with transaction.atomic():
         _pick_next_person(current_user, raffle_event)
-    return JsonResponse({'success':True})
+    return JsonResponse({'success': True})
+
+
+@login_required
+def rotate_image(request, gift_id, angle):
+    current_user = request.user
+    gift = get_object_or_404(Gift, id=gift_id)
+    if gift.added_by != current_user:
+        if current_user.is_superuser is False:
+            return HttpResponseForbidden()
+    if angle not in (90, 180, 270):
+        return HttpResponseBadRequest()
+    image_stream = BytesIO()
+    pixelated_image_stream = BytesIO()
+
+    img = Image.open(BytesIO(gift.image.read()))
+    img.rotate(angle, expand=1).save(image_stream, format=img.format)
+
+    pixelated_image = Image.open(BytesIO(gift.pixelated_image.read()))
+    pixelated_image.rotate(angle, expand=1).save(pixelated_image_stream, format=pixelated_image.format)
+
+    gift.save(new_image_data=(image_stream, pixelated_image_stream))
+
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER') or reverse_lazy('my_donations'))
 
 
 @login_required
