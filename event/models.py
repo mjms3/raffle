@@ -146,6 +146,7 @@ class Gift(models.Model):
     image = models.ImageField(storage=MediaStorage)
     pixelated_image = models.ImageField(editable=False)
     event = models.ForeignKey(RaffleEvent, on_delete=CASCADE)
+    container_id = models.IntegerField(editable=False, null=True)
 
     tracker = FieldTracker(fields=('description',))
 
@@ -177,8 +178,8 @@ class Gift(models.Model):
         return self.pixelated_image.url if self.wrapped else self.image.url
 
     @property
-    def image_id(self):
-        return 'image-{}'.format(self.id)
+    def image_container_id(self):
+        return 'image-{}'.format(self.container_id or self.id)
 
 class Action(models.Model):
     event = models.ForeignKey(RaffleEvent, on_delete=CASCADE)

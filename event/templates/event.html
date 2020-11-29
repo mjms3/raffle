@@ -101,7 +101,7 @@
                 <div class="row">
                     {% for gift in object_list %}
                         <div class="col-lg-3 p-4">
-                            <img class="img-fluid" id="{{ gift.image_id }}" src="{{ gift.image_url }}" alt="">
+                            <img class="img-fluid" id="{{ gift.image_container_id }}" src="{{ gift.image_url }}" alt="">
                         </div>
                         {% if forloop.counter|divisibleby:4 %}
                             </div>
@@ -116,7 +116,7 @@
             window.onload = function () {
                 {# Process image clicks#}
                 $("[id^=image]").on("click", function () {
-                    var image_id = this.id;
+                    var image_id = $(this).data('gift_id');
                     $.ajax({
                         type: 'POST',
                         url: '{% url 'process_image_click' %}',
@@ -168,13 +168,17 @@
                             entry.appendChild(document.createTextNode(activity));
                             list.appendChild(entry);
                         }
+                        if (data['activity'].length > 0) {
+                            {# Scroll the sidebar #}
+                            $("#lhNavbar").animate({scrollTop: $('#lhNavbar').prop("scrollHeight")}, 1000);
+                        }
 
-                        {# Scroll the sidebar #}
-                        $("#lhNavbar").animate({ scrollTop: $('#lhNavbar').prop("scrollHeight")}, 1000);
-
+                        {# update container contents #}
                         $('#action-stream').data("last_processed_action", data["last_event"]);
-                        for (image_id of Object.keys(data['image_urls'])) {
-                            $('#' + image_id).attr('src', data['image_urls'][image_id]);
+                        for (container_id of Object.keys(data['container_contents'])) {
+                            let container = $('#' + container_id);
+                            container.attr('src', data['container_contents'][container_id]['src_url']);
+                            container.data('gift_id', data['container_contents'][container_id]['gift_id']);
                         }
                     },
                     timeout: 5000

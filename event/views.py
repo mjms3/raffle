@@ -1,4 +1,5 @@
 from io import BytesIO
+from random import shuffle
 
 from PIL import Image
 from django.contrib.auth.decorators import login_required, permission_required
@@ -123,6 +124,19 @@ def change_current_gift_picker(request, event_id):
         _pick_next_person(current_user, raffle_event)
     return JsonResponse({'success': True})
 
+@permission_required('change_raffleevent')
+def permute_images(request, event_id):
+    raffle_event = get_object_or_404(RaffleEvent, id=event_id)
+
+    with transaction.atomic():
+        gifts = Gift.objects.filter(event_id=raffle_event.id)
+        container_ids = [r.id for r in gifts]
+        shuffle(container_ids)
+        for gift, container_id in zip(gifts, container_ids):
+            gift.container_id = container_id
+        Gift.objects.bulk_update(gifts, ['container_id'])
+    return JsonResponse({'success': True})
+
 
 @login_required
 def rotate_image(request, gift_id, angle):
@@ -226,9 +240,12 @@ def stream(request):
     activity = Action.objects.filter(id__gt=last_processed_action,
                                      event=event,
                                      )
-    image_urls = {r.image_id:r.image_url for r in Gift.objects.filter(event_id=event.id)}
+    container_contents = {r.image_container_id:
+                              {'src_url': r.image_url,
+                               'gift_id': r.id,
+                               } for r in Gift.objects.filter(event_id=event.id)}
     return JsonResponse({
         'activity': [a.message for a in activity],
         'last_event': max(a.id for a in activity) if len(activity) > 0 else last_processed_action,
-        'image_urls': image_urls,
+        'container_contents': container_contents,
     })

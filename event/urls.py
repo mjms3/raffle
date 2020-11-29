@@ -17,5 +17,6 @@ urlpatterns = [
     path('api/process_swap_gift/', views.process_swap_gift, name='process_swap_gift'),
     path('api/stream/', views.stream, name='event_stream'),
     path('api/change_picker/<int:event_id>', views.change_current_gift_picker, name='change_picker'),
+    path('api/permute_images/<int:event_id>', views.permute_images, name='change_picker'),
     path('api/rotate_image/<int:gift_id>/<int:angle>', views.rotate_image, name='rotate_image'),
 ]
