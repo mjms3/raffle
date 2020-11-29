@@ -1,5 +1,43 @@
-{% extends 'common.html' %}
-{% block container %}
+{% extends 'base.html' %}
+
+{% block page_header %}
+    <style>
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100; /* Behind the navbar */
+            padding: 48px 0 0; /* Height of navbar */
+            box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+        }
+
+        .sidebar-sticky {
+            position: relative;
+            top: 0;
+            height: calc(100vh - 48px);
+            padding-top: .8rem;
+            overflow-x: hidden;
+            overflow-y: auto; /* Scrollable contents if viewport is shorter than content. */
+        }
+
+        @supports ((position: -webkit-sticky) or (position: sticky)) {
+            .sidebar-sticky {
+                position: -webkit-sticky;
+                position: sticky;
+            }
+        }
+
+
+        [role="main"] {
+            padding-top: 48px; /* Space for fixed navbar */
+        }
+
+    </style>
+{% endblock %}
+
+{% block mainpage %}
     <div class="modal" id="giftSwapModal" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
@@ -48,43 +86,45 @@
         </div>
     </div>
 
-        <div class="row row-offcanvas row-offcanvas-left vh-100">
-            <div class="col-md-4 col-lg-4 sidebar-offcanvas h-100 overflow-auto bg-light pl-0" id="sidebar"
-                 role="navigation">
-                <ul class="nav flex-column sticky-top pl-0 pt-5 mt-3 h-100 overflow-auto" id="action-stream">
-                </ul>
-            </div>
-            <div class="col main pt-5 mt-3 h-100 overflow-auto">
+
+    <div class="container-fluid">
+        <div class="row">
+            <nav class="col-md-3 d-none d-md-block bg-light sidebar">
+                <div class="sidebar-sticky" id="lhNavbar">
+                    <ul class="nav flex-column" id="action-stream">
+
+                    </ul>
+                </div>
+            </nav>
+
+            <main role="main" class="col-md-9 ml-sm-auto col-lg-9 p-10">
                 <div class="row">
                     {% for gift in object_list %}
-                    <div class="col-lg-3 px-0">
-                        <img class="img-fluid" id="{{ gift.image_id }}" src="{{ gift.image_url }}" alt="">
-                    </div>
-                    {% if forloop.counter|divisibleby:4 %}
+                        <div class="col-lg-3 p-4">
+                            <img class="img-fluid" id="{{ gift.image_id }}" src="{{ gift.image_url }}" alt="">
                         </div>
-                        <div class="row">
-                    {% endif %}
-
-                {% endfor %}
-                </div>
+                        {% if forloop.counter|divisibleby:4 %}
+                            </div>
+                            <div class="row">
+                        {% endif %}
+                    {% endfor %}
+                    </div>
+            </main>
         </div>
-    </div>
 
-
-
-    <script language="JavaScript" type="text/javascript">
-        window.onload = function () {
-            {# Process image clicks#}
-            $("[id^=image]").on("click", function () {
-                var image_id = this.id;
-                $.ajax({
-                    type: 'POST',
-                    url: '{% url 'process_image_click' %}',
-                    data: {
-                        'image_id': image_id,
-                        'event_id': {{ view.kwargs.event_id }},
-                        'csrfmiddlewaretoken': '{{ csrf_token }}',
-                    },
+        <script language="JavaScript" type="text/javascript">
+            window.onload = function () {
+                {# Process image clicks#}
+                $("[id^=image]").on("click", function () {
+                    var image_id = this.id;
+                    $.ajax({
+                        type: 'POST',
+                        url: '{% url 'process_image_click' %}',
+                        data: {
+                            'image_id': image_id,
+                            'event_id': {{ view.kwargs.event_id }},
+                            'csrfmiddlewaretoken': '{{ csrf_token }}',
+                        },
                     dataType: 'json',
                     success: function (data) {
                         if ('error' in data && data['error'] !== null) {
@@ -128,6 +168,10 @@
                             entry.appendChild(document.createTextNode(activity));
                             list.appendChild(entry);
                         }
+
+                        {# Scroll the sidebar #}
+                        $("#lhNavbar").animate({ scrollTop: $('#lhNavbar').prop("scrollHeight")}, 1000);
+
                         $('#action-stream').data("last_processed_action", data["last_event"]);
                         for (image_id of Object.keys(data['image_urls'])) {
                             $('#' + image_id).attr('src', data['image_urls'][image_id]);

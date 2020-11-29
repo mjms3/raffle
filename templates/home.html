@@ -1,13 +1,9 @@
-{% extends 'base.html' %}
+{% extends 'no_sidebar.html' %}
 {% block header %}
-    <div class="container">
-        <h1>Home</h1>
-    </div>
+Home
 {% endblock %}
 
-
 {% block content %}
-    <hr class="mt-2 mb-5">
     <p>Welcome to the Cboe Christmas Raffle Site!</p>
     {% if not user.is_authenticated %}
         <p>In order to use this site you will need to <a href="{% url 'signup' %}">signup</a> or

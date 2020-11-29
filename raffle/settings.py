@@ -23,6 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 if ENV_TYPE == 'dev':
     environ.Env.read_env()
+    DEBUG = True
 
 
 if ENV_TYPE == 'prod':
@@ -73,6 +74,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'raffle.middleware.HealthCheckMiddleware',
+    'raffle.middleware.LogExceptionMiddleWare',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
