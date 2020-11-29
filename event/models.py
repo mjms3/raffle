@@ -10,6 +10,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import CASCADE
 from django.db.models import F
+from django.utils import timezone
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 from model_utils import FieldTracker
@@ -106,10 +107,10 @@ def _process_image(image_obj, new_image_data):
         pixelated_image.save(in_memory_file_for_pixelated_image, format=img.format)
     return (
         ContentFile(in_memory_file_for_normal_image.getvalue(),
-                    '{}/{}{}'.format(hash(datetime.now().strftime('%Y%m%d%H%M%S%f')),
+                    '{}/{}{}'.format(hash(timezone.now().strftime('%Y%m%d%H%M%S%f')),
                                       hash(image_file_name), ext)),
         ContentFile(in_memory_file_for_pixelated_image.getvalue(),
-                    '{}/pixelated-{}{}'.format(datetime.now().strftime('%Y%m%d%H%M%S'),
+                    '{}/pixelated-{}{}'.format(timezone.now().strftime('%Y%m%d%H%M%S'),
                                                 slugify(image_file_name), ext)),
     )
 
@@ -137,7 +138,7 @@ def _pick_next_person(current_user, raffle_event):
     next_person.save()
 
 class Gift(models.Model):
-    add_ts = models.DateTimeField(default=datetime.now, blank=True)
+    add_ts = models.DateTimeField(default=timezone.now, blank=True)
     description = models.CharField(max_length=120)
     wrapped = models.BooleanField(default=True)
     added_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.RESTRICT, editable=False, related_name='donations')
