@@ -14,16 +14,20 @@ from pathlib import Path
 import environ
 
 env = environ.Env(
-    DEBUG=(bool, False)
+    DEBUG=(bool, False),
+    ENV_TYPE=(str, 'dev'),
 )
-DEBUG = env('DEBUG')
-if DEBUG:
-    environ.Env.read_env()
+ENV_TYPE = env('ENV_TYPE')
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-if not DEBUG:
+if ENV_TYPE == 'dev':
+    environ.Env.read_env()
+
+
+if ENV_TYPE == 'prod':
     import logging.config
+
     LOGGING_CONFIG = None
     logging.config.dictConfig({
         'version': 1,
@@ -46,9 +50,6 @@ if not DEBUG:
             },
         },
     })
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
 SECRET_KEY = env('SECRET_KEY')
 
