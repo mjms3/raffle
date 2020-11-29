@@ -1,4 +1,5 @@
 from io import BytesIO
+from operator import itemgetter
 from random import shuffle
 
 from PIL import Image
@@ -25,7 +26,7 @@ class EventView(LoginRequiredMixin, ListView):
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super().get_context_data(object_list=object_list, **kwargs)
         event = get_object_or_404(RaffleEvent, id=self.kwargs['event_id'])
-        context['user_mapping'] = sorted((u.id, u.username) for u in event.participants.all())
+        context['user_mapping'] = sorted(((u.id, u.username) for u in event.participants.all()), key=itemgetter(1))
         return context
 
 class GiftIndexView(PermissionRequiredMixin, ListView):
