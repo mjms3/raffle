@@ -74,14 +74,6 @@ class RaffleParticipation(models.Model):
         return '%i tickets for %s in %s' % (self.number_of_tickets, self.user, self.event)
 
 
-def file_visible_condition(request, instance):
-    user_logged_in = (not request.user.is_anonymous) and request.user.is_authenticated
-    owned_by_this_user = instance.added_by.pk == request.user.pk
-    user_is_admin = request.user.is_superuser
-    gift_is_unwrapped = not instance.wrapped
-    return user_logged_in and (owned_by_this_user or user_is_admin or gift_is_unwrapped)
-
-
 RESIZE_WIDTH = 600
 
 
