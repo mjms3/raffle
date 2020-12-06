@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.db.models import F
 from django.urls import reverse
 from django.utils.html import format_html
 
@@ -38,6 +39,12 @@ class RaffleParticipationAdmin(admin.ModelAdmin):
         'number_of_tickets',
         'number_of_times_drawn',
     )
+
+    actions = ["remove_from_raffle"]
+
+    def remove_from_raffle(self, request, queryset):
+        queryset.update(number_of_times_drawn=F('number_of_tickets'))
+    remove_from_raffle.short_description = 'Remove from raffle'
 
 admin.site.register(Gift,GiftAdmin)
 admin.site.register(RaffleEvent, RaffleEventAdmin)
