@@ -29,7 +29,10 @@ class GiftAdmin(admin.ModelAdmin):
     list_display = (
         'description',
         'added_by',
-        'wrapped'
+        'wrapped',
+        'id',
+        'container_id',
+        'given_to',
     )
 
 class RaffleParticipationAdmin(admin.ModelAdmin):
