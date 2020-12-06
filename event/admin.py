@@ -7,7 +7,6 @@ from event.models import Gift, RaffleEvent, RaffleParticipation, Action
 
 class RaffleEventAdmin(admin.ModelAdmin):
     list_display = (
-        'id',
         'name',
         'phase',
         'raffle_actions',
@@ -16,9 +15,11 @@ class RaffleEventAdmin(admin.ModelAdmin):
     def raffle_actions(self, obj):
         return format_html(
             '<a class="button" href="{}">Change picker</a>&nbsp;'
-            '<a class="button" href="{}">Permute Images</a>',
+            '<a class="button" href="{}">Permute Images</a>&nbsp;'
+            '<a class="button" href="{}">Reset</a>',
             reverse('change_picker', args=[obj.pk]),
             reverse('permute_images', args=[obj.pk]),
+            reverse('reset_raffle', args=[obj.pk]),
         )
     raffle_actions.short_description = 'Raffle Actions'
     raffle_actions.allow_tags = True
@@ -40,5 +41,5 @@ class RaffleParticipationAdmin(admin.ModelAdmin):
 
 admin.site.register(Gift,GiftAdmin)
 admin.site.register(RaffleEvent, RaffleEventAdmin)
-admin.site.register(RaffleParticipation)
+admin.site.register(RaffleParticipation, RaffleParticipationAdmin)
 admin.site.register(Action)

@@ -138,6 +138,23 @@ def permute_images(request, event_id):
         Gift.objects.bulk_update(gifts, ['container_id'])
     return JsonResponse({'success': True})
 
+@permission_required('change_raffleevent')
+def reset_raffle(request, event_id):
+    raffle_event = get_object_or_404(RaffleEvent, id=event_id)
+
+    with transaction.atomic():
+        raffle_event.phase = RaffleEvent.Phase.PRE_START
+
+        gifts = raffle_event.gift_set
+        gifts.update(wrapped=True, container_id=None, given_to=None)
+
+        participantions = raffle_event.raffleparticipation_set
+        participantions.update(number_of_times_drawn=0)
+
+        actions = raffle_event.action_set.all()
+        actions.delete()
+
+    return JsonResponse({'success': True})
 
 @login_required
 def rotate_image(request, gift_id, angle):
