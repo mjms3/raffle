@@ -192,22 +192,19 @@ class Action(models.Model):
     @property
     def message(self):
         if self.action_type == Action.ActionType.CHOOSE_GIFT:
-            return '{:%H:%M:%S}: {} unwrapped a {}'.format(
-                self.timestamp_ts,
+            return '{} unwrapped a {}'.format(
                 self.by_user,
                 self.gift.description,
             )
         elif self.action_type == Action.ActionType.TRANSFERRED:
-            return '{:%H:%m:%S}: {} transferred {} from {} to {}'.format(
-                self.timestamp_ts,
+            return '{} transferred {} from {} to {}'.format(
                 self.by_user,
                 self.gift.description,
                 self.from_user,
                 self.to_user
             )
         elif self.action_type == Action.ActionType.CHANGED_USER:
-            return "{:%H:%m:%S}: It is {}'s turn to pick!".format(
-                self.timestamp_ts,
+            return "It is {}'s turn to pick!".format(
                 self.to_user
             )
 
