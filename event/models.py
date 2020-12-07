@@ -7,7 +7,7 @@ from PIL import Image
 from django.contrib.auth.models import User
 from django.core.files.base import ContentFile
 from django.core.validators import MaxValueValidator, MinValueValidator
-from django.db import models
+from django.db import models, transaction
 from django.db.models import CASCADE
 from django.db.models import F
 from django.utils import timezone
@@ -109,25 +109,25 @@ def _process_image(image_obj, new_image_data):
 
 def _pick_next_person(current_user, raffle_event):
     assert raffle_event.phase == RaffleEvent.Phase.NORMAL_RAFFLE
-    raffle_participants = RaffleParticipation.objects.filter(event_id=raffle_event.id).filter(
-        number_of_tickets__gt=F('number_of_times_drawn'))
-    weights = [r.number_of_tickets - r.number_of_times_drawn for r in raffle_participants]
-    next_person = random.choices(raffle_participants, weights)
-    assert len(next_person) == 1, next_person
-    next_person = next_person[0]
-    action = Action(
-        event=raffle_event,
-        gift=None,
-        from_user=None,
-        to_user=next_person.user,
-        by_user=current_user,
-        action_type=Action.ActionType.CHANGED_USER
-    )
-    next_person.number_of_times_drawn += 1
-    raffle_event.current_user = next_person.user
-    raffle_event.save()
-    action.save()
-    next_person.save()
+    with transaction.atomic():
+        raffle_participants = raffle_event.raffleparticipation_set.filter(number_of_tickets__gt=F('number_of_times_drawn'))
+        weights = [r.number_of_tickets - r.number_of_times_drawn for r in raffle_participants]
+        next_person = random.choices(raffle_participants, weights)
+        assert len(next_person) == 1, next_person
+        next_person = next_person[0]
+        action = Action(
+            event=raffle_event,
+            gift=None,
+            from_user=None,
+            to_user=next_person.user,
+            by_user=current_user,
+            action_type=Action.ActionType.CHANGED_USER
+        )
+        next_person.number_of_times_drawn += 1
+        raffle_event.current_user = next_person.user
+        raffle_event.save()
+        action.save()
+        next_person.save()
 
 class Gift(models.Model):
     add_ts = models.DateTimeField(default=timezone.now, blank=True)
