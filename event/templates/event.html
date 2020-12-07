@@ -1,5 +1,11 @@
 {% extends 'base.html' %}
 
+{% block nav_rhs %}
+    <div class="mx-auto order-0">
+        <a class="navbar-brand" href="{% url 'user_profile' %}" id="user-status"></a>
+    </div>
+{% endblock %}
+
 {% block page_header %}
     <style>
 
@@ -50,7 +56,7 @@
                 <div class="modal-body">
                     <form>
                         <div class="form-group">
-                            <label id="toUserSelectLabel" for="toUserSelect">Pay 5 pounds to swap xxx from yyy to:</label>
+                            <label id="toUserSelectLabel" for="toUserSelect">Pay &pound;5 to swap xxx from yyy to:</label>
                             <select class="form-control" id="toUserSelect">
                                 {% for user_id, display_name in user_mapping %}
                                     <option value="{{ user_id }}">{{ display_name }}</option>
@@ -139,7 +145,7 @@
                             var giftSwapModal = $('#giftSwapModal');
                             giftSwapModal.data("current_user_id", data['modal_data']['current_user_id']);
                             giftSwapModal.data("gift_id", data['modal_data']['gift_id']);
-                            $('#toUserSelectLabel').text('Pay 5 pounds to swap ' + data['modal_data']['gift_description'] + ' from ' + data['modal_data']['current_user_display_name'] + ' to:')
+                            $('#toUserSelectLabel').html('Pay &pound;5 to swap ' + data['modal_data']['gift_description'] + ' from ' + data['modal_data']['current_user_display_name'] + ' to:')
                             giftSwapModal.modal();
                         }
                     }
@@ -180,6 +186,9 @@
                             container.attr('src', data['container_contents'][container_id]['src_url']);
                             container.data('gift_id', data['container_contents'][container_id]['gift_id']);
                         }
+
+                        {# update user status #}
+                        $('#user-status').html(data['user_status'])
                     },
                     timeout: 5000
                 }).always(function () {

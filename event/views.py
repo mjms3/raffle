@@ -264,8 +264,37 @@ def stream(request):
                               {'src_url': r.image_url,
                                'gift_id': r.id,
                                } for r in Gift.objects.filter(event_id=event.id)}
+
+    user_status_template = '{user}: {tickets}{swaps} {cost}'
+    ticket_details = request.user.raffleparticipation_set.filter(event_id=event.id).get()
+    total_owed = 0
+    if not ticket_details:
+        tickets_text = 'No tickets for the raffle'
+    else:
+        tickets_text = '{} tickets of {} drawn'.format(
+            ticket_details.number_of_times_drawn,
+            ticket_details.number_of_tickets,
+        )
+        total_owed += 5*ticket_details.number_of_tickets
+    if event.phase in (RaffleEvent.Phase.GIFT_SWAP, RaffleEvent.Phase.FINISHED):
+        swaps = request.user.initiated_actions.filter(
+            action_type=Action.ActionType.TRANSFERRED,
+            event=event.id).count()
+        swaps_text = ', swapped {} gifts'.format(swaps)
+        total_owed += 5*swaps
+    else:
+        swaps_text = ''
+
+    user_status_text = user_status_template.format(
+        user=request.user,
+        tickets=tickets_text,
+        swaps=swaps_text,
+        cost='(&pound;{} owed)'.format(total_owed),
+    )
+
     return JsonResponse({
         'activity': [a.message for a in activity],
         'last_event': max(a.id for a in activity) if len(activity) > 0 else last_processed_action,
         'container_contents': container_contents,
+        'user_status': user_status_text,
     })

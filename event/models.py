@@ -180,7 +180,7 @@ class Action(models.Model):
     gift = models.ForeignKey(Gift,on_delete=CASCADE, null=True)
     from_user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=CASCADE, related_name='original_users', null=True)
     to_user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=CASCADE, related_name='target_users')
-    by_user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=CASCADE, related_name='acting_users')
+    by_user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=CASCADE, related_name='initiated_actions')
 
     class ActionType(models.TextChoices):
         CHOOSE_GIFT = 'C', _('Chose gift')
