@@ -139,6 +139,7 @@
                         if ('gift_image_url' in data){
                             $('#unwrapModalTitle').text('You unwrapped a '+data['gift_description']);
                             $('#unwrapModalImage').attr('src',data['gift_image_url']);
+                            $('#action-stream').data("processed_gifts")[data['gift_id']] = undefined;
                             $('#unwrapModal').modal();
                         }
                         if ('modal_data' in data) {
@@ -157,6 +158,7 @@
         $(document).ready(function () {
             {# Poll the event stream#}
             $('#action-stream').data("last_processed_action", 0);
+            $('#action-stream').data("processed_gifts", {});
 
             function poll() {
                 $.post({
@@ -180,12 +182,30 @@
                         }
 
                         {# update container contents #}
-                        $('#action-stream').data("last_processed_action", data["last_event"]);
-                        for (container_id of Object.keys(data['container_contents'])) {
+                        let actionStream = $('#action-stream');
+                        actionStream.data("last_processed_action", data["last_event"]);
+
+                        let containerContents = data['container_contents'];
+                        let processedGifts = actionStream.data("processed_gifts")
+                        let modalsShown = 0;
+
+                        for (container_id of Object.keys(containerContents)) {
                             let container = $('#' + container_id);
-                            container.attr('src', data['container_contents'][container_id]['src_url']);
-                            container.data('gift_id', data['container_contents'][container_id]['gift_id']);
+                            let dataForContainer = containerContents[container_id];
+                            if (dataForContainer['unwrapped']&&!(dataForContainer['gift_id'] in processedGifts) ){
+                                if (modalsShown ==0) {
+                                    $('#unwrapModalTitle').text(dataForContainer['given_to'] + ' unwrapped a ' + dataForContainer['gift_description']);
+                                    $('#unwrapModalImage').attr('src', dataForContainer['src_url']);
+                                    $('#unwrapModal').modal();
+                                    modalsShown = modalsShown +1;
+                                }
+                                processedGifts[dataForContainer['gift_id']] = undefined;
+                            }
+                            container.attr('src', dataForContainer['src_url']);
+                            container.data('gift_id', dataForContainer['gift_id']);
+
                         }
+                        actionStream.data("processed_gifts", processedGifts)
 
                         {# update user status #}
                         $('#user-status').html(data['user_status'])

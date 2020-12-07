@@ -218,6 +218,7 @@ def process_image_click(request):
             'error': None,
             'gift_description': gift.description,
             'gift_image_url': gift.image_url,
+            'gift_id':gift.id,
         })
     elif raffle_event.phase == raffle_event.Phase.GIFT_SWAP:
         return JsonResponse({'modal_data': {
@@ -261,10 +262,25 @@ def stream(request):
                                      event=event,
                                      )
     container_contents = {r.image_container_id:
-                              {'src_url': r.image_url,
-                               'gift_id': r.id,
-                               } for r in Gift.objects.filter(event_id=event.id)}
+        {
+            'src_url': r.image_url,
+            'gift_id': r.id,
+            'unwrapped': not r.wrapped,
+            'given_to': r.given_to.display_name if r.given_to else None,
+            'gift_description': '' if r.wrapped else r.description,
+        } for r in event.gift_set.all()}
 
+    user_status_text = _get_user_status_text(event, request)
+
+    return JsonResponse({
+        'activity': [a.message for a in activity],
+        'last_event': max(a.id for a in activity) if len(activity) > 0 else last_processed_action,
+        'container_contents': container_contents,
+        'user_status': user_status_text,
+    })
+
+
+def _get_user_status_text(event, request):
     user_status_template = '{user}: {tickets}{swaps} {cost}'
     ticket_details = request.user.raffleparticipation_set.filter(event_id=event.id).get()
     total_owed = 0
@@ -275,26 +291,19 @@ def stream(request):
             ticket_details.number_of_times_drawn,
             ticket_details.number_of_tickets,
         )
-        total_owed += 5*ticket_details.number_of_tickets
+        total_owed += 5 * ticket_details.number_of_tickets
     if event.phase in (RaffleEvent.Phase.GIFT_SWAP, RaffleEvent.Phase.FINISHED):
         swaps = request.user.initiated_actions.filter(
             action_type=Action.ActionType.TRANSFERRED,
             event=event.id).count()
         swaps_text = ', swapped {} gifts'.format(swaps)
-        total_owed += 5*swaps
+        total_owed += 5 * swaps
     else:
         swaps_text = ''
-
     user_status_text = user_status_template.format(
         user=request.user,
         tickets=tickets_text,
         swaps=swaps_text,
         cost='(&pound;{} owed)'.format(total_owed),
     )
-
-    return JsonResponse({
-        'activity': [a.message for a in activity],
-        'last_event': max(a.id for a in activity) if len(activity) > 0 else last_processed_action,
-        'container_contents': container_contents,
-        'user_status': user_status_text,
-    })
+    return user_status_text
