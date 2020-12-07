@@ -1,11 +1,11 @@
 from django.contrib import messages
-from django.contrib.auth import authenticate, login, update_session_auth_hash
+from django.contrib.auth import authenticate, login, update_session_auth_hash, get_user_model
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect, render
-from django.urls import reverse_lazy, reverse
-from django.views.generic import FormView, TemplateView
+from django.urls import reverse_lazy
+from django.views.generic import FormView, UpdateView
 
 from account.forms import CustomUserCreationForm, CustomUserChangeForm
 
@@ -34,6 +34,16 @@ class UserProfileView(LoginRequiredMixin, FormView):
     form_class = CustomUserChangeForm
     template_name = 'profile.html'
     success_url = reverse_lazy('user_profile')
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['instance'] = self.request.user
+        return kwargs
+
+    def form_valid(self, form):
+        form.save()
+        return super().form_valid(form)
+
 
 def change_password(request):
     if request.method == 'POST':

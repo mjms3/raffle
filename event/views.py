@@ -26,7 +26,7 @@ class EventView(LoginRequiredMixin, ListView):
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super().get_context_data(object_list=object_list, **kwargs)
         event = get_object_or_404(RaffleEvent, id=self.kwargs['event_id'])
-        context['user_mapping'] = sorted(((u.id, u.username) for u in event.participants.all()), key=itemgetter(1))
+        context['user_mapping'] = sorted(((u.id, u.display_name) for u in event.participants.all()), key=itemgetter(1))
         return context
 
 class GiftIndexView(PermissionRequiredMixin, ListView):
@@ -223,7 +223,7 @@ def process_image_click(request):
         return JsonResponse({'modal_data': {
             'gift_id': gift.id,
             'gift_description': gift.description,
-            'current_user_username': gift.given_to.username,
+            'current_user_display_name': gift.given_to.display_name,
             'current_user_id': gift.given_to_id,
         }})
 

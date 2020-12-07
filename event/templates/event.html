@@ -52,8 +52,8 @@
                         <div class="form-group">
                             <label id="toUserSelectLabel" for="toUserSelect">Pay 5 pounds to swap xxx from yyy to:</label>
                             <select class="form-control" id="toUserSelect">
-                                {% for user_id, username in user_mapping %}
-                                    <option value="{{ user_id }}">{{ username }}</option>
+                                {% for user_id, display_name in user_mapping %}
+                                    <option value="{{ user_id }}">{{ display_name }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -139,7 +139,7 @@
                             var giftSwapModal = $('#giftSwapModal');
                             giftSwapModal.data("current_user_id", data['modal_data']['current_user_id']);
                             giftSwapModal.data("gift_id", data['modal_data']['gift_id']);
-                            $('#toUserSelectLabel').text('Pay 5 pounds to swap ' + data['modal_data']['gift_description'] + ' from ' + data['modal_data']['current_user_username'] + ' to:')
+                            $('#toUserSelectLabel').text('Pay 5 pounds to swap ' + data['modal_data']['gift_description'] + ' from ' + data['modal_data']['current_user_display_name'] + ' to:')
                             giftSwapModal.modal();
                         }
                     }

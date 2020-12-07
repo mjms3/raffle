@@ -10,6 +10,7 @@ class RaffleEventAdmin(admin.ModelAdmin):
     list_display = (
         'name',
         'phase',
+        'current_user',
         'raffle_actions',
     )
 
