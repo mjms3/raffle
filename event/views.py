@@ -282,7 +282,7 @@ def stream(request):
 
 def _get_user_status_text(event, request):
     user_status_template = '{user}: {tickets}{swaps} {cost}'
-    ticket_details = request.user.raffleparticipation_set.filter(event_id=event.id).get()
+    ticket_details = request.user.raffleparticipation_set.filter(event_id=event.id).first()
     total_owed = 0
     if not ticket_details:
         tickets_text = 'No tickets for the raffle'
