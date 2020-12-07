@@ -144,6 +144,8 @@ def reset_raffle(request, event_id):
 
     with transaction.atomic():
         raffle_event.phase = RaffleEvent.Phase.PRE_START
+        raffle_event.current_user = None
+        raffle_event.save()
 
         gifts = raffle_event.gift_set
         gifts.update(wrapped=True, container_id=None, given_to=None)
