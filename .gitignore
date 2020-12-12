@@ -1,5 +1,6 @@
 venv
 .idea
+adhoc
 .env
 **/__pycache__
 # Elastic Beanstalk Files
