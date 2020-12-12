@@ -70,6 +70,18 @@ class RaffleEventSerializer(ModelSerializer):
         }
         for gift in gifts:
             user_summary[gift.given_to.username]['raffle_prizes'].append(gift.description)
+            if gift.added_by.username not in user_summary:
+                user_summary[gift.added_by.username] = {
+                    'username': gift.added_by.username,
+                    'email': gift.added_by.email,
+                    'display_name': gift.added_by.display_name,
+                    'tickets_purchased': 0,
+                    'times_drawn': 0,
+                    'total_owed_for_tickets': 0,
+                    'raffle_prizes': [],
+                    'donation_final_locations': [],
+                    'transfers': [],
+                }
             user_summary[gift.added_by.username]['donation_final_locations'].append(
                 {
                     'gift': gift.description,
