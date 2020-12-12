@@ -19,5 +19,6 @@ urlpatterns = [
     path('api/change_picker/<int:event_id>', views.change_current_gift_picker, name='change_picker'),
     path('api/permute_images/<int:event_id>', views.permute_images, name='permute_images'),
     path('api/reset_raffle/<int:event_id>', views.reset_raffle, name='reset_raffle'),
+    path('api/summarise_raffle/<int:event_id>', views.summarise_raffle, name='summarise_raffle'),
     path('api/rotate_image/<int:gift_id>/<int:angle>', views.rotate_image, name='rotate_image'),
 ]

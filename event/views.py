@@ -6,13 +6,18 @@ from PIL import Image
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import PermissionRequiredMixin, LoginRequiredMixin
 from django.db import transaction
+from django.db.models import ForeignObjectRel
 from django.http import JsonResponse, HttpResponseRedirect, HttpResponseForbidden, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from rest_framework.decorators import api_view, renderer_classes
+from rest_framework.renderers import JSONRenderer
+from rest_framework.response import Response
 
 from account.models import CustomUser
 from event.models import Action, Gift, RaffleEvent, _pick_next_person, RaffleParticipation
+from event.serializers import RaffleEventSerializer
 
 
 class EventView(LoginRequiredMixin, ListView):
@@ -157,6 +162,15 @@ def reset_raffle(request, event_id):
         actions.delete()
 
     return JsonResponse({'success': True})
+
+
+@permission_required('change_raffleevent')
+@api_view(('GET',))
+@renderer_classes((JSONRenderer,))
+def summarise_raffle(request,event_id):
+    raffle_event = get_object_or_404(RaffleEvent, id=event_id)
+    serializer = RaffleEventSerializer(raffle_event)
+    return Response(serializer.data)
 
 @login_required
 def rotate_image(request, gift_id, angle):

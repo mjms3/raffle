@@ -18,10 +18,12 @@ class RaffleEventAdmin(admin.ModelAdmin):
         return format_html(
             '<a class="button" href="{}">Change picker</a>&nbsp;'
             '<a class="button" href="{}">Permute Images</a>&nbsp;'
-            '<a class="button" href="{}">Reset</a>',
+            '<a class="button" href="{}">Reset</a>&nbsp;'
+            '<a class="button" href="{}">Summarise</a>',
             reverse('change_picker', args=[obj.pk]),
             reverse('permute_images', args=[obj.pk]),
             reverse('reset_raffle', args=[obj.pk]),
+            reverse('summarise_raffle', args=[obj.pk]),
         )
     raffle_actions.short_description = 'Raffle Actions'
     raffle_actions.allow_tags = True
